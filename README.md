@@ -1,2 +1,2 @@
 # pict_client_restapi
-The simple c++/qt rest api client
+A simple REST API client in C++/Qt
