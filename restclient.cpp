@@ -1,11 +1,44 @@
 #include "restclient.h"
+#include <QSslConfiguration>
+#include <QSslCertificate>
 #include <QFileInfo>
 #include <QDebug>
 
-RestClient::RestClient(const QString &baseUrl, QObject *parent)
-    : QObject(parent), m_baseUrl(baseUrl)
+RestClient::RestClient(QObject *parent)
+    : QObject(parent), m_manager(new QNetworkAccessManager(this))
 {
-    m_manager = new QNetworkAccessManager(this);
+    setupSslConfiguration();
+}
+
+RestClient::RestClient(const QString &baseUrl, QObject *parent)
+    : QObject(parent), m_manager(new QNetworkAccessManager(this)), m_baseUrl(baseUrl)
+{
+    setupSslConfiguration();
+}
+
+// Вспомогательный метод (можно объявить в private секции хедера restclient.h)
+void RestClient::setupSslConfiguration() {
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+
+    // Загружаем сертификат (например, из ресурсов Qt)
+    QList<QSslCertificate> certs = QSslCertificate::fromPath("../assets/cert.pem");
+
+    if (!certs.isEmpty()) {
+        sslConfig.addCaCertificates(certs);
+        // Важно: если используете этот вариант, в методе createRequest(const QString &endpoint)
+        // перед m_manager->get/post нужно будет устанавливать эту конфигурацию в QNetworkRequest:
+        // request.setSslConfiguration(sslConfig);
+        QSslConfiguration::setDefaultConfiguration(sslConfig);
+    } else {
+        qWarning() << "Предупреждение: Сертификат не найден по пути :/certs/server.crt. Проверьте файл ресурсов .qrc";
+    }
+}
+
+void RestClient::setBaseUrl(const QString &url) {
+    if (m_baseUrl != url) {
+        m_baseUrl = url;
+        emit baseUrlChanged();
+    }
 }
 
 QNetworkRequest RestClient::createRequest(const QString &endpoint)
@@ -17,6 +50,15 @@ QNetworkRequest RestClient::createRequest(const QString &endpoint)
     if (!m_token.isEmpty()) {
         request.setRawHeader("Authorization", "Bearer " + m_token.toUtf8());
     }
+
+    // --- НАЧАЛО ИЗМЕНЕНИЙ ДЛЯ SSL ---
+    // Получаем глобальную конфигурацию (в которую ваш метод setupSslConfiguration добавил сертификат)
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+
+    // Принудительно связываем эту конфигурацию с текущим запросом
+    request.setSslConfiguration(sslConfig);
+    // --- КОНЕЦ ИЗМЕНЕНИЙ ДЛЯ SSL ---
+
     return request;
 }
 
@@ -104,5 +146,51 @@ void RestClient::onFolderListReply(QNetworkReply *reply)
         emit folderListReceived(doc.object());
     } else {
         emit errorOccurred("Ошибка получения списка: " + reply->errorString());
+    }
+}
+
+// --- 2. РЕГИСТРАЦИЯ ---
+void RestClient::registerUser(const QString &username, const QString &password)
+{
+    QJsonObject json;
+    json["username"] = username;
+    json["password"] = password;
+
+    // Отправляем запрос на эндпоинт регистрации
+    QNetworkRequest request = createRequest("/auth/register");
+    QNetworkReply *reply = m_manager->post(request, QJsonDocument(json).toJson());
+
+    // Лямбда-функция связывает завершение запроса с обработчиком ответа
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() { onRegisterReply(reply); });
+}
+
+void RestClient::onRegisterReply(QNetworkReply *reply)
+{
+    // Обязательно освобождаем память после завершения обработки
+    reply->deleteLater();
+
+    if (reply->error() == QNetworkReply::NoError) {
+        // Читаем успешный ответ от сервера
+        QByteArray responseData = reply->readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(responseData);
+
+        qDebug() << "Регистрация успешна:" << responseData;
+
+        // Здесь можно вызывать сигнал успеха, чтобы QML переключил экран на логин
+        // emit registerSuccess();
+    }
+    else {
+        // Если сервер вернул ошибку (например, 400 Bad Request или 409 Conflict)
+        QByteArray responseData = reply->readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(responseData);
+
+        // Пытаемся достать текст ошибки, отправленный вашим Node.js сервером
+        QString serverError = doc.object().value("error").toString();
+
+        if (!serverError.isEmpty()) {
+            emit errorOccurred(serverError);
+        } else {
+            emit errorOccurred(reply->errorString());
+        }
     }
 }

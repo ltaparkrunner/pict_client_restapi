@@ -2,8 +2,9 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QIcon>
-#include "authhandler.h"
+// #include "authhandler.h"
 #include "restclient.h"
+// #include "msghandler.h"
 
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
@@ -14,16 +15,12 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Alex@Co");
     app.setWindowIcon(QIcon("../icons/clover_transparent.png"));
 
-    AuthHandler authHandler{};
     RestClient rest_clt("https://localhost:8082");
 
     QQmlApplicationEngine engine;
 
-    // Пробрасываем контекстное свойство в QML
-    engine.rootContext()->setContextProperty("authHandler", &authHandler);
-
-    // Загружаем главный модуль QML (убедитесь, что имя модуля совпадает с вашим CMakeLists.txt)
+    RestClient restClient("https://localhost:8080");
+    engine.rootContext()->setContextProperty("restClient", &restClient);
     engine.loadFromModule("pict_client_restapi", "Main");
-
     return app.exec();
 }

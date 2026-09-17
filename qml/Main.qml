@@ -42,162 +42,14 @@ ApplicationWindow {
     }
 
     Connections {
-        target: imageModel
-        function onMinioImageToQML(url) {
-            mainImageSource = url;
-            //  console.log("Получено из C++:", url)
+        target: restClient
+        function onLoginSuccess(token) {
+            console.log("Logged in successfully! Token: " + token)
+        }
+        function onErrorOccurred(errorMsg) {
+            console.error("Failed: " + errorMsg)
         }
     }
-
-    Connections{
-        target: storageModel
-        function onOpenNetStoreDialog(sel, netPath, cleanPath) {
-            console.log("function onOpenNetStoreDialog(sel, netPath, cleanPath): ", sel, " ", netPath, " ", cleanPath)
-            if(sel === 100){
-                customDialog.currentTabIndex = 1;
-                //  customDialog.currentSelectedPath = netPath;
-                // customDialog.textFld = netPath TODO
-                // customDialog.currentNetworkPath = netPath
-                parentNetworkPath = netPath
-                cleanNetworkPath = cleanPath
-                customDialog.show();
-            }
-            if(sel === 110){
-                warningDialog.messageText = "Invalid path: " + netPath
-                warningDialog.open()
-            }
-        }
-    }
-
-    // WarnDialog{
-    //     clientBackend: wsClient
-    //     id: loginWarn
-    // }
-
-    // WarningDialog {
-    //     id: warningDialog
-    //     messageText: "Are you sure you want to delete this file? This action cannot be undone."
-    //     onAccepted: console.log("User clicked OK")
-    //     onRejected: console.log("User clicked Cancel")
-    // }
-
-    // CustomFileDialog {
-    //     id: customDialog
-
-    //     Binding {
-    //         target: customDialog
-    //         property: "currentLocalPath"
-    //         value: rootWnd.parentLocalPath
-    //     }
-    //     Binding {
-    //         target: customDialog
-    //         property: "currentNetworkPath"
-    //         value: rootWnd.parentNetworkPath
-    //     }
-    //     Binding {
-    //         target: customDialog
-    //         property: "currentTabIndex"
-    //         value: rootWnd.parentCustomDlgTb
-    //     }
-    //     onOpenIndexSelected:(index) => {
-    //         //  console.log("onOpenIndexSelected: ", index, " rows: ", storageModel.rowCount())
-    //         if(index>=0 && index<storageModel.rowCount()){
-    //             let img = storageModel.get(index)
-    //             let imgPath = img.path;
-    //             let prefix = "file:///";
-    //             if(!img.isMinio && !imgPath.startsWith(prefix)){
-    //                 mainImageSource = prefix + imgPath
-    //             }
-    //             else mainImageSource = imgPath
-    //             //  console.log("onOpenIndexSelected: ", imgPath);
-    //             let data = storageModel.getData(index);
-    //             console.log("onOpenIndexSelected: cleanPath: ", data.cleanPath, " isMinio: ", data.isMinio)
-    //             //  console.log("onOpenIndexSelected: ", index);
-    //             imageModel.insertImage(data);
-    //         }
-    //         else console.log("Путь не распознан или не существует 1");
-    //     }
-    //     onOpenIndicesSelected:(indices) => {
-    //         let maxindx = storageModel.rowCount()
-    //         let arr = []
-    //         let succ = 0
-    //         let dir = 0
-    //         let dirToGo
-    //         for(let indx of indices) {
-    //             //  console.log("onOpenIndicesSelected indx: ", indx)
-    //             if(indx>=0 && indx < maxindx){
-    //                 let img = storageModel.get(indx);
-    //                 if(!img.isDir && !img.isMinioBucket && !img.VirtualDir) {
-    //                     if(!succ){
-    //                         let imgPath = img.path;
-    //                         let prefix = "file:///";
-    //                         if(!img.isMinio && !imgPath.startsWith(prefix)){
-    //                             mainImageSource = prefix + imgPath
-    //                         }
-    //                         else mainImageSource = imgPath
-    //                         succ = 1
-    //                     }
-    //                     let data = storageModel.getData(indx)
-    //                     arr.push(data)
-    //                 }
-    //                 else if((dir===0) && (img.isDir ||  img.isMinioBucket)){
-    //                     dirToGo = {indx:indx, isDir:img.isDir, isMinio:img.isMinio, isBucket:img.isMinioBucket}; dir = 1;
-    //                 }
-    //             }
-    //         }
-    //         imageModel.insertImages(arr);
-    //         if(dirToGo !== null && dirToGo !== undefined)  // TODO:
-    //             if(dirToGo.dirToGo.isDir && !dirToGo.isMinio)   {       //TODO: qrc:/qt/qml/pict_client/qml/Main.qml:117: TypeError: Cannot read property 'isDir' of undefined
-    //                     console.log("storageModel.enterLocal(dirToGo.indx", dirToGo.indx)
-    //                     storageModel.enterLocal(dirToGo.indx)
-    //                 }
-    //             else if(dirToGo.isBucket)     storageModel.enterMinioBucket(dirToGo.indx)
-    //             else if(dirToGo.isDir && dirToGo.isMinio && !dirToGo.isBucket)  storageModel.enterNetStore(dirToGo.indx)
-    //     }
-    //     onWriteImages: (lf, path) => {
-    //         //  console.log("onWritePathsSelected paths: ", path)
-    //         storageModel.writeImagesToFolder(lf, path);
-    //     }
-    //     onDeletePathsSelected:(indices) => {
-    //         if(indices){
-    //             storageModel.deleteIndices(indices)
-    //         }
-    //     }
-
-    //     onSetParentPaths:(tbIndx, localPath, networkPath, nwCleanPath) => {
-    //         console.log("tbIndx: ", tbIndx, " networkPath: ", networkPath, " nwCleanPath: ", nwCleanPath)
-    //         if(tbIndx === 0) {
-    //             parentCustomDlgTb = 0;
-    //             parentLocalPath = localPath;
-    //             console.log("tf.tfContent = localPath 1")
-    //             tf.tfContent = localPath;
-    //         }
-    //         else {
-    //             parentCustomDlgTb = 1;
-    //             parentNetworkPath = networkPath;
-    //             cleanNetworkPath = nwCleanPath
-    //             // console.log("tf.tfContent = cleanNetworkPath")
-    //             // tf.tfContent = cleanNetworkPath;
-    //             tf.tfContent = nwCleanPath
-    //         }
-    //     }
-    // }
-
-    // NetworkDialog {
-    //     id: nwDialog
-    //     isNetworkAvailable: wsClient.authConnectionState
-    //     onAccepted: {
-    //         // При нажатии "Повторить" инициируем новое подключение
-    //         wsClient.connectToServer()
-    //     }
-    // }
-    // UserLogin {
-    //     id: userLogin
-    // }
-
-    // UserLogoff {
-    //     id: userLogoff
-    // }
 
     MessageDialog {
         id: msgNothingToDo
@@ -231,6 +83,7 @@ ApplicationWindow {
             Layout.fillHeight: true
             width: parent.width
             RowLayout{
+                // Layout.alignment: Qt.AlignTop
                 TextField {
                     id: tf
                     property string tfContent: "/home"
@@ -294,36 +147,36 @@ ApplicationWindow {
                         // height: 25
                         anchors.fill: parent
                         anchors.margins: loginButton.hovered ? 2 : 1
-                        Image {
-                            id: userImage
-                            anchors.fill: parent
-                            source: getCurrentUserImage()
-                            visible: false
+                        // Image {
+                        //     id: userImage
+                        //     anchors.fill: parent
+                        //     source: getCurrentUserImage()
+                        //     visible: false
 
-                            function getCurrentUserImage() {
-                                if(wsClient.authConnectionState !== WebSocketClient.Authorized)
-                                    return "../icons/user.svg";
-                                else {//return "../icons/cherry-blossom.png"
-                                    var index = Math.floor(Math.random() * fileNames.length);
-                                    return fileNames[index]
-                                }
-                            }
-                        }
+                        //     function getCurrentUserImage() {
+                        //         if(wsClient.authConnectionState !== WebSocketClient.Authorized)
+                        //             return "../icons/user.svg";
+                        //         else {//return "../icons/cherry-blossom.png"
+                        //             var index = Math.floor(Math.random() * fileNames.length);
+                        //             return fileNames[index]
+                        //         }
+                        //     }
+                        // }
 
-                        Image {
-                            id: userMask
-                            source: "../icons/userMask.svg"
-                            anchors.fill: userImage
-                            anchors.margins: 4
-                            visible: false
-                        }
+                        // Image {
+                        //     id: userMask
+                        //     source: "../icons/userMask.svg"
+                        //     anchors.fill: userImage
+                        //     anchors.margins: 4
+                        //     visible: false
+                        // }
 
-                        MultiEffect {
-                            source: userImage
-                            anchors.fill: userImage
-                            maskSource: userMask
-                            maskEnabled: true
-                        }
+                        // MultiEffect {
+                        //     source: userImage
+                        //     anchors.fill: userImage
+                        //     maskSource: userMask
+                        //     maskEnabled: true
+                        // }
                     }
 
                     onClicked: {
@@ -340,45 +193,46 @@ ApplicationWindow {
                             nwDialog.open()
                         }
                     }
-                    Shape {
-                        id: bubble
-                        x: -text.width - 25
-                        anchors.margins: 3
-                        preferredRendererType: Shape.CurveRenderer
-                        visible: wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
-                                 wsClient.authConnectionState === WebSocketClient.LoggedOut
-                        ShapePath {
-                            strokeWidth: 0
-                            fillColor: "#667085"
-                            startX: 5; startY: 0
-                            PathLine { x: 5 + text.width + 6; y: 0 }
-                            PathArc { x: 10 + text.width + 6; y: 5; radiusX: 5; radiusY: 5}
-                            // arrow
-                            PathLine { x: 10 + text.width + 6; y: 8 + text.height / 2 - 6 }
-                            PathLine { x: 10 + text.width + 6 + 6; y: 8 + text.height / 2 }
-                            PathLine { x: 10 + text.width + 6; y: 8 + text.height / 2 + 6}
-                            PathLine { x: 10 + text.width + 6; y: 5 + text.height + 6 }
-                            // end arrow
-                            PathArc { x: 5 + text.width + 6; y: 10 + text.height + 6 ; radiusX: 5; radiusY: 5}
-                            PathLine { x: 5; y: 10 + text.height + 6 }
-                            PathArc { x: 0; y: 5 + text.height + 6 ; radiusX: 5; radiusY: 5}
-                            PathLine { x: 0; y: 5 }
-                            PathArc { x: 5; y: 0 ; radiusX: 5; radiusY: 5}
-                        }
-                        Text {
-                            x: 8
-                            y: 8
-                            id: text
-                            color: "white"
-                            //  text: qsTr("Log in to edit")
-                            text: authHandler ? ( authHandler.loggedIn ? authHandler.username : "Log in to edit") : "Log in to edit"
-                            font.bold: true
-                            horizontalAlignment: Qt.AlignHCenter
-                            verticalAlignment: Qt.AlignVCenter
-                        }
-                    }
+                    // Shape {
+                    //     id: bubble
+                    //     x: -text.width - 25
+                    //     anchors.margins: 3
+                    //     preferredRendererType: Shape.CurveRenderer
+                    //     visible: wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
+                    //              wsClient.authConnectionState === WebSocketClient.LoggedOut
+                    //     ShapePath {
+                    //         strokeWidth: 0
+                    //         fillColor: "#667085"
+                    //         startX: 5; startY: 0
+                    //         PathLine { x: 5 + text.width + 6; y: 0 }
+                    //         PathArc { x: 10 + text.width + 6; y: 5; radiusX: 5; radiusY: 5}
+                    //         // arrow
+                    //         PathLine { x: 10 + text.width + 6; y: 8 + text.height / 2 - 6 }
+                    //         PathLine { x: 10 + text.width + 6 + 6; y: 8 + text.height / 2 }
+                    //         PathLine { x: 10 + text.width + 6; y: 8 + text.height / 2 + 6}
+                    //         PathLine { x: 10 + text.width + 6; y: 5 + text.height + 6 }
+                    //         // end arrow
+                    //         PathArc { x: 5 + text.width + 6; y: 10 + text.height + 6 ; radiusX: 5; radiusY: 5}
+                    //         PathLine { x: 5; y: 10 + text.height + 6 }
+                    //         PathArc { x: 0; y: 5 + text.height + 6 ; radiusX: 5; radiusY: 5}
+                    //         PathLine { x: 0; y: 5 }
+                    //         PathArc { x: 5; y: 0 ; radiusX: 5; radiusY: 5}
+                    //     }
+                    //     Text {
+                    //         x: 8
+                    //         y: 8
+                    //         id: text
+                    //         color: "white"
+                    //         //  text: qsTr("Log in to edit")
+                    //         text: authHandler ? ( authHandler.loggedIn ? authHandler.username : "Log in to edit") : "Log in to edit"
+                    //         font.bold: true
+                    //         horizontalAlignment: Qt.AlignHCenter
+                    //         verticalAlignment: Qt.AlignVCenter
+                    //     }
+                    // }
                 }
             }
+/*
             RowLayout{
                 Button {
                     id: fileButton
@@ -426,8 +280,9 @@ ApplicationWindow {
                     }
                 }
             }
+*/
         }
-
+/*
         RowLayout {
            Layout.fillHeight: true
            width: parent.width
@@ -607,6 +462,42 @@ ApplicationWindow {
                 }
             }
         }
+*/
+            // Поле ввода логина
+            TextField {
+                id: usernameField // <--- Этот ID используется в кнопке
+                placeholderText: "Введите логин"
+                Layout.preferredWidth: 250
+            }
+
+            // Поле ввода пароля
+            TextField {
+                id: passwordField // <--- Этот ID используется в кнопке
+                placeholderText: "Введите пароль"
+                echoMode: TextInput.Password // Скрывает символы пароля
+                Layout.preferredWidth: 250
+            }
+
+            // Ваша кнопка
+            Button {
+                text: "Log In"
+                Layout.alignment: Qt.AlignHCenter
+
+                onClicked: {
+                    // Теперь свойства .text будут успешно прочитаны из полей выше
+                    restClient.login(usernameField.text, passwordField.text)
+                }
+            }
+            // Ваша кнопка 2
+            Button {
+                text: "Register"
+                Layout.alignment: Qt.AlignHCenter
+
+                onClicked: {
+                    // Теперь свойства .text будут успешно прочитаны из полей выше
+                    restClient.registerUser(usernameField.text, passwordField.text)
+                }
+            }
     }
     footer: ToolBar {
         id: statusBar
@@ -617,27 +508,7 @@ ApplicationWindow {
         // Меняем цвет фона панели в зависимости от состояния сети/авторизации
         background: Rectangle {
             color: {
-                if (!wsClient) return "#667085" // Цвет по умолчанию (Серый)
-
-                switch (wsClient.authConnectionState) {
-                    case WebSocketClient.Authorized:
-                        return "#2e7d32" // Зеленый (Успешно подключен)
-                    case WebSocketClient.Connecting:
-                    case WebSocketClient.Connected:
-                    case WebSocketClient.Authenticating:
-                    case WebSocketClient.LoggingOut:
-                    case WebSocketClient.AuthorizedNoPingRespond:
-                    case WebSocketClient.LoggedOutNoPingRespond:
-                    case WebSocketClient.ExternalDisconnecting:
-                    case WebSocketClient.UserDisconnecting:
-                        return "#f57c00" // Оранжевый (В процессе)
-                    case WebSocketClient.NoConnection:
-                        return "#d32f2f" // Красный (Ошибка)
-                    case WebSocketClient.NotAuthorized:
-                    case WebSocketClient.LoggedOut: return "darkkhaki"
-                    default:
-                        return "#667085"
-                }
+                return "#667085" // Цвет по умолчанию (Серый)
             }
 
             // Плавный переход цвета при смене состояний
@@ -660,17 +531,18 @@ ApplicationWindow {
                 color: "white"
 
                 // Делаем так, чтобы индикатор мигал во время подключения
-                SequentialAnimation on opacity {
-                    running: wsClient.authConnectionState === WebSocketClient.Connecting ||
-                             wsClient.authConnectionState === WebSocketClient.Authenticating
-                    loops: Animation.Infinite
-                    PropertyAnimation { to: 0.2; duration: 500 }
-                    PropertyAnimation { to: 1.0; duration: 500 }
-                    // Если состояние стабильное, просто горит на 100%
-                    onRunningChanged: if (!running) opacity = 1.0
-                }
+                // SequentialAnimation on opacity {
+                //     running: wsClient.authConnectionState === WebSocketClient.Connecting ||
+                //              wsClient.authConnectionState === WebSocketClient.Authenticating
+                //     loops: Animation.Infinite
+                //     PropertyAnimation { to: 0.2; duration: 500 }
+                //     PropertyAnimation { to: 1.0; duration: 500 }
+                //     // Если состояние стабильное, просто горит на 100%
+                //     onRunningChanged: if (!running) opacity = 1.0
+                // }
             }
-            // Текстовое описание текущего статуса
+            // Текстовое описание текущего
+/*
             Label {
                 //anchors.verticalCenter: parent.verticalCenter
                 Layout.alignment: Qt.AlignVCenter
@@ -699,89 +571,9 @@ ApplicationWindow {
 
                 }
             }
+*/
         }
     }
-    function processPath(path){
-        if(path) {
-            let type = FileHelper.checkPathType(path);
-            if (type === FileHelperType.LocalFile) {
-//                console.log("before imageGrid.model.addFilePath(path)", path)
-                imageGrid.model.addImagePath(path)
-                mainImageSource = imageGrid.model.resolvePath(path)
-            } else if (type === FileHelperType.LocalFolder) {
-                mainImageSource = imageGrid.model.addFilesFromFolder(path)
-            } else if (type === FileHelperType.MinioBucket) {
-                mainImageSource = imageGrid.model.addImagesFromMinioBucket(path)
-            } else if (type === FileHelperType.MinioFile) {
-                mainImageSource = imageGrid.model.addMinioImagePath(path)
-            }
-            // else {
-            //     console.log("Путь не распознан или не существует");
-            // }
-        }
-    }
-
-    function processWritePaths(ls, paths) {
-        if(paths) {
-            let type = FileHelper.checkPathType(path);
-            if (type === FileHelperType.LocalFile) {
-                imageGrid.model.addImagePath(path)
-                mainImageSource = imageGrid.model.resolvePath(path)
-            } else if (type === FileHelperType.LocalFolder) {
-                mainImageSource = imageGrid.model.addFilesFromFolder(path)
-            } else if (type === FileHelperType.MinioBucket) {
-                mainImageSource = imageGrid.model.addImagesFromMinioBucket(path)
-            } else if (type === FileHelperType.MinioFile) {
-                mainImageSource = imageGrid.model.addMinioImagePath(path)
-            }
-            // else {
-            //     console.log("Путь не распознан или не существует");
-            // }
-        }
-    }
-
-    function processTFPath(){
-        wsClient.connectToServer()
-        {
-            let result = FileHelper.extCheckPathType(tf.text);
-            tf.tfContent = result.path
-            let type = result.type
-            if (type === FileHelperType.LocalFile) {
-                imageModel.addImagePath(tf.text)
-            } else if (type === FileHelperType.LocalFolder) {
-                storageModel.enterLocal(tf.text)
-                parentCustomDlgTb = 0;
-                parentLocalPath = tf.text;
-                customDialog.show();
-            } else if (type === FileHelperType.MinioBucket) {
-                parentCustomDlgTb = 1;
-                //customDialog.currentTabIndex = 1;
-                storageModel.setParent(tf.text, "mb")
-                storageModel.getNetPath(tf.text, 98)
-            } else if(type === FileHelperType.MinioFolder) {
-                parentCustomDlgTb = 1;
-                storageModel.setParent(tf.text, "md")
-                storageModel.getNetPath(tf.text, 100)
-            } else if (type === FileHelperType.MinioFile) {
-                storageModel.setParent(tf.text, "mf")
-                storageModel.getNetPath(tf.text, 102)
-            } else {
-                warningDialog.messageText = "Путь не распознан или не существует:  " +  tf.text;
-                warningDialog.open()
-            }
-        }
-    }
-
     Component.onCompleted:{
-//        console.log("parentLocalPath", parentLocalPath,  "parentNetworkPath", parentNetworkPath, "cleanNetworkPath", cleanNetworkPath)
-        if(parentCustomDlgTb !== 0 && parentNetworkPath !== "") { parentNetworkPath = cleanNetworkPath; tf.tfContent = parentNetworkPath; }
-        else if((parentCustomDlgTb === 0 || parentNetworkPath === "") && parentLocalPath !== "") {
-            tf.tfContent = parentLocalPath; parentCustomDlgTb = 0;
-        }
-        else {
-            parentLocalPath = Qt.platform.os === "windows" ? "C:/Users" : "/home";
-            parentNetworkPath = "https://minio::9000"
-            parentCustomDlgTb = 0;
-        }
     }
 }

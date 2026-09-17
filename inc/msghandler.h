@@ -5,15 +5,16 @@
 #include <QString>
 #include <QDebug>
 #include <QtProtobuf/QProtobufSerializer>
-//#include <QUrl>
-#include "websocketclient.h"
+// #include <QUrl>
+// #include "websocketclient.h"
+#include "restclient.h"
 #include "auxilary.h"
 
 
 class MsgHandler : public QObject {
     Q_OBJECT
 public:
-    explicit MsgHandler(WebSocketClient *client, QObject *parent = nullptr);
+    explicit MsgHandler(RestClient *client, QObject *parent = nullptr);
 
     Q_INVOKABLE int getBucketsListRequest() const;
     int addFileRequest(const QString &folder, const QString &path, const QString &mId);
@@ -43,9 +44,8 @@ public slots:
 private slots:
     void handleIncomingServerData(const pict_data::ServerEnvelope &data);
 
-
 private:
-    WebSocketClient *m_client;
+    RestClient *r_client;
     QString token;
 };
 #endif // MSGHANDLER_H
