@@ -224,8 +224,8 @@ public:
             endInsertRows(); // This triggers the QML view update
             return;
         }
-
     }
+
     Q_INVOKABLE int insertImage(const QVariantMap &map) {
         qDebug() << "Q_INVOKABLE int insertImage(const QVariantMap &map)";
         bool isDir = map["isDir"].toBool();

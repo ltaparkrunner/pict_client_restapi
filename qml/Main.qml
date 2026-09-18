@@ -52,6 +52,18 @@ ApplicationWindow {
         }
     }
 
+    RestClient {
+        id: client
+    }
+
+    UserLogin {
+        id: userLogin
+    }
+
+    UserLogoff {
+        id: userLogoff
+    }
+
     CustomFileDialog {
         id: customDialog
 
@@ -250,46 +262,49 @@ ApplicationWindow {
                         // height: 25
                         anchors.fill: parent
                         anchors.margins: loginButton.hovered ? 2 : 1
-                        // Image {
-                        //     id: userImage
-                        //     anchors.fill: parent
-                        //     source: getCurrentUserImage()
-                        //     visible: false
+                        Image {
+                            id: userImage
+                            anchors.fill: parent
+                            source: getCurrentUserImage()
+                            visible: false
 
-                        //     function getCurrentUserImage() {
-                        //         if(wsClient.authConnectionState !== WebSocketClient.Authorized)
-                        //             return "../icons/user.svg";
-                        //         else {//return "../icons/cherry-blossom.png"
-                        //             var index = Math.floor(Math.random() * fileNames.length);
-                        //             return fileNames[index]
-                        //         }
-                        //     }
-                        // }
+                            function getCurrentUserImage() {
+                                //  if(wsClient.authConnectionState !== WebSocketClient.Authorized)
+                                if(client.authStatus !== ConnStatus.Authenticating)
+                                    return "../icons/user.svg";
+                                else {//return "../icons/cherry-blossom.png"
+                                    var index = Math.floor(Math.random() * fileNames.length);
+                                    return fileNames[index]
+                                }
+                            }
+                        }
 
-                        // Image {
-                        //     id: userMask
-                        //     source: "../icons/userMask.svg"
-                        //     anchors.fill: userImage
-                        //     anchors.margins: 4
-                        //     visible: false
-                        // }
+                        Image {
+                            id: userMask
+                            source: "../icons/userMask.svg"
+                            anchors.fill: userImage
+                            anchors.margins: 4
+                            visible: false
+                        }
 
-                        // MultiEffect {
-                        //     source: userImage
-                        //     anchors.fill: userImage
-                        //     maskSource: userMask
-                        //     maskEnabled: true
-                        // }
+                        MultiEffect {
+                            source: userImage
+                            anchors.fill: userImage
+                            maskSource: userMask
+                            maskEnabled: true
+                        }
                     }
 
                     onClicked: {
 //                        if(!authHandler.loggedIn) {
-                        if(wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
-                            wsClient.authConnectionState === WebSocketClient.LoggedOut){
+                        // if(wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
+                        //     wsClient.authConnectionState === WebSocketClient.LoggedOut){
+                        if(client.authStatus !== ConnStatus.Authenticating) {
                             userLogin.statusTextElement.text = ""
                             userLogin.open()
                         }
-                        else if(wsClient.authConnectionState === WebSocketClient.Authorized){
+//                        else if(wsClient.authConnectionState === WebSocketClient.Authorized){
+                        else if(client.authStatus === ConnStatus.Authenticating){
                             userLogoff.open()
                         }
                         else {
@@ -384,7 +399,7 @@ ApplicationWindow {
                 }
             }
         }
-/*
+
         RowLayout {
            Layout.fillHeight: true
            width: parent.width
@@ -564,7 +579,7 @@ ApplicationWindow {
                 }
             }
         }
-*/
+/*
             // Поле ввода логина
             TextField {
                 id: usernameField // <--- Этот ID используется в кнопке
@@ -600,6 +615,7 @@ ApplicationWindow {
                     restClient.registerUser(usernameField.text, passwordField.text)
                 }
             }
+*/
     }
     footer: ToolBar {
         id: statusBar

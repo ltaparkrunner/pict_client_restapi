@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts 1.15
-import pict_client
+import pict_client_restapi
 
 Dialog {
     id: logoffDialog

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
-import pict_client
+import pict_client_restapi
 
 Dialog {
     id: authDialog
@@ -45,10 +45,10 @@ Dialog {
     // }
 
     Connections {
-        target: wsClient
+        target: restClient
         function onAuthConnectionStateChanged(){
             console.log("function authConnectionStateChanged")
-            if(wsClient.authConnectionState === WebSocketClient.Authorized) {
+            if(restClient.authConnectionState === WebSocketClient.Authorized) {
                 console.log("function authConnectionStateChanged Succ")
                 statusText.color = "green"
                 statusText.text = "Вход успешно выполнен!"
@@ -56,13 +56,13 @@ Dialog {
                 loginTimer.start()
                 loginButton.enabled = true
             }
-            if(wsClient.authConnectionState === WebSocketClient.NotAuthorized) {
+            if(restClient.authConnectionState === WebSocketClient.NotAuthorized) {
                 console.log("function authConnectionStateChanged Err")
                 statusText.color = "red"
                 statusText.text = "Authorization error, check your login and password."
                 loginButton.enabled = true
             }
-            if(wsClient.authConnectionState === WebSocketClient.NoConnection) {
+            if(restClient.authConnectionState === WebSocketClient.NoConnection) {
                 console.log("function authConnectionStateChanged Err")
                 statusText.color = "red"
                 statusText.text = "No network connection. Check your network."

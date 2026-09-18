@@ -20,6 +20,8 @@ qt_add_qml_module(${PROJECT_NAME}
         qml/CustomFileDialog.qml
         qml/WarnDialog.qml
         qml/FolderDialog.qml
+        qml/UserLogin.qml
+        qml/UserLogoff.qml
     SOURCES
         restclient.h restclient.cpp
         inc/filehelper.h src/filehelper.cpp
@@ -38,6 +40,7 @@ qt_add_qml_module(${PROJECT_NAME}
         icons/warning.png
         icons/warning2.png
         icons/userMask.svg
+        icons/user.svg
         assets/cert.pem
         assets/pictures/pict1.jpg
         assets/pictures/pict2.jpg
