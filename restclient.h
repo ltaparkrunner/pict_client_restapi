@@ -9,6 +9,8 @@
 #include <QJsonArray>
 #include <QFile>
 #include <QtQml/qqmlregistration.h> // Recommended for Qt 6 QML registration macros
+#include "connstatus.h"
+#include <QTimer>
 
 class RestClient : public QObject
 {
@@ -36,6 +38,11 @@ public:
     Q_INVOKABLE void uploadFile(const QString &filePath, const QString &targetFolder, const QString &info);
     Q_INVOKABLE void fetchFolderList(const QString &folderName);
 
+    Q_INVOKABLE void checkConnection();
+    Q_INVOKABLE void startAutoPing(int intervalSeconds = 30); // Запуск таймера (по умолчанию 30 сек)
+    Q_INVOKABLE void stopAutoPing();                          // Остановка таймера
+
+
 signals:
     void loginSuccess(const QString &token);
 
@@ -47,18 +54,21 @@ signals:
     // Property change notifier signals
     void baseUrlChanged();
     void tokenChanged();
+    void connectionStatusChanged(bool connected);
 
 private slots:
     void onLoginReply(QNetworkReply *reply);
     void onUploadReply(QNetworkReply *reply);
     void onFolderListReply(QNetworkReply *reply);
     void onRegisterReply(QNetworkReply *reply);
+    void onPingReply(QNetworkReply *reply);
 
 private:
     QNetworkAccessManager *m_manager;
     QString m_baseUrl;
     QString m_token;
 
+    QTimer *m_pingTimer = nullptr;
     QNetworkRequest createRequest(const QString &endpoint);
     void setupSslConfiguration();
 };

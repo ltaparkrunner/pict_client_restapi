@@ -4,7 +4,8 @@
 #include <QAbstractListModel>
 #include <QDir>
 #include <QObject>
-#include "websocketclient.h"
+// #include "websocketclient.h"
+#include "restclient.h"
 #include "msghandler.h"
 #include "globals.h"
 
@@ -39,7 +40,8 @@ class UnifiedStorageModel : public QAbstractListModel {
 public:
     enum Roles { NameRole = Qt::UserRole + 2, PathRole, CleanPathRole, IsDirRole, IsMinioRole,  IsMinioBucketRole, IsVirtualDirRole, MongoIdRole};
 
-    explicit UnifiedStorageModel(WebSocketClient *wsc, MsgHandler *svrHndlr, QObject *parent = nullptr);
+//    explicit UnifiedStorageModel(WebSocketClient *wsc, MsgHandler *svrHndlr, QObject *parent = nullptr);
+    explicit UnifiedStorageModel(RestClient *rc, MsgHandler *svrHndlr, QObject *parent = nullptr);
     // Основные методы модели
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -79,7 +81,8 @@ signals:
 private:
     QVector<StorageItem> m_items;
     StorageItem m_parentItem;
-    WebSocketClient *wsclient;
+    // WebSocketClient *wsclient;
+    RestClient *restClient;
     MsgHandler *msghandler;
     const QStringList allowedExtensions = {"jpg", "jpeg", "png", "bmp", "gif"};
     QString prefix = "http://minio:9000/";

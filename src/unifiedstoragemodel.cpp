@@ -2,15 +2,15 @@
 #include "filedownloader.h"
 #include "auxilary.h"
 
-UnifiedStorageModel::UnifiedStorageModel(WebSocketClient *wsc, MsgHandler *svrHndlr, QObject *parent)
+UnifiedStorageModel::UnifiedStorageModel(RestClient *rc, MsgHandler *svrHndlr, QObject *parent)
     : QAbstractListModel{parent}
-    , wsclient (wsc)
+    , restClient (rc)
     , msghandler (svrHndlr)
 //    , workPath("https://minio:9000")
     , workPath (netPrefixes[0])
 {
     connect(msghandler, &MsgHandler::pathsReceived, this, &UnifiedStorageModel::minioPathsToQML);
-    connect(wsclient, &WebSocketClient::errReceived, this, [=](){
+    connect(restClient, &WebSocketClient::errReceived, this, [=](){
 
         beginResetModel();
         m_items.clear();

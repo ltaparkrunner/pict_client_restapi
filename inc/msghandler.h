@@ -42,10 +42,11 @@ signals:
 public slots:
 
 private slots:
-    void handleIncomingServerData(const pict_data::ServerEnvelope &data);
+//    void handleIncomingServerData(const pict_data::ServerEnvelope &data);
+    void handleIncomingServerData(QNetworkReply *reply);
 
 private:
-    RestClient *r_client;
+    RestClient *m_client;
     QString token;
 };
 #endif // MSGHANDLER_H

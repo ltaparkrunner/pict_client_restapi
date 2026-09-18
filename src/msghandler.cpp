@@ -1,7 +1,7 @@
 #include "msghandler.h"
 #include <QFileInfo>
 
-MsgHandler::MsgHandler(WebSocketClient *client, QObject *parent)
+MsgHandler::MsgHandler(RestClient *client, QObject *parent)
     : QObject(parent), m_client(client)
 {
     connect(m_client, &WebSocketClient::serverResponseReceived,

@@ -9,6 +9,7 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import QtCore
 //import pict_client //1.0
+import com.myapp.helpers 1.0
 import pict_client_restapi
 
 ApplicationWindow {
@@ -232,7 +233,7 @@ ApplicationWindow {
                     // }
                 }
             }
-/*
+
             RowLayout{
                 Button {
                     id: fileButton
@@ -276,11 +277,10 @@ ApplicationWindow {
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
                     onClicked: {
-                        rootWnd.processTFPath()
+                        rootWnd.processTFPath(tf.text)
                     }
                 }
             }
-*/
         }
 /*
         RowLayout {
@@ -572,6 +572,39 @@ ApplicationWindow {
                 }
             }
 */
+        }
+    }
+    function processTFPath(){
+        restClient.checkConnection()
+        {
+            let result = FileHelper.extCheckPathType(tf.text);
+            tf.tfContent = result.path
+            let type = result.type
+            if (type === FileHelperType.LocalFile) {
+                console.log("LocalFile")
+                imageModel.addImagePath(tf.text)
+            } else if (type === FileHelperType.LocalFolder) {
+                console.log("LocalFolder")
+                storageModel.enterLocal(tf.text)
+                parentCustomDlgTb = 0;
+                parentLocalPath = tf.text;
+                customDialog.show();
+            } else if (type === FileHelperType.MinioBucket) {
+                parentCustomDlgTb = 1;
+                //customDialog.currentTabIndex = 1;
+                storageModel.setParent(tf.text, "mb")
+                storageModel.getNetPath(tf.text, 98)
+            } else if(type === FileHelperType.MinioFolder) {
+                parentCustomDlgTb = 1;
+                storageModel.setParent(tf.text, "md")
+                storageModel.getNetPath(tf.text, 100)
+            } else if (type === FileHelperType.MinioFile) {
+                storageModel.setParent(tf.text, "mf")
+                storageModel.getNetPath(tf.text, 102)
+            } else {
+                warningDialog.messageText = "Путь не распознан или не существует:  " +  tf.text;
+                warningDialog.open()
+            }
         }
     }
     Component.onCompleted:{

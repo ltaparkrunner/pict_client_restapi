@@ -61,3 +61,137 @@ void RestClient::onFolderListReply(QNetworkReply *reply)
 
 
 Key Practices to Remember:reply->readAll(): This grabs the entire body payload sent back by the server.reply->error(): Always check this before parsing data to gracefully handle connection drops, 404s, or 500 internal server errors.reply->deleteLater(): Crucial for memory management so you don't leak memory with every HTTP request.Would you like to see how you connect these slots to your QNetworkAccessManager requests inside your login or fetchFolderList methods, or do you need help handling these responses inside your QML frontend?
+
+
+
+
+// Вспомогательные сеттеры, которые генерируют сигналы только при реальном изменении
+void RestClient::setConnectionStatus(ConnectionStatus status) {
+    if (m_connectionStatus != status) {
+        m_connectionStatus = status;
+        emit connectionStatusChanged(m_connectionStatus);
+    }
+}
+
+void RestClient::setAuthStatus(AuthStatus status) {
+    if (m_authStatus != status) {
+        m_authStatus = status;
+        emit authStatusChanged(m_authStatus);
+    }
+}
+
+// === Интеграция в существующие методы ===
+
+void RestClient::login(const QString &username, const QString &password) {
+    setAuthStatus(AuthStatus::Authenticating); // Включаем режим "Загрузка..."
+    
+    // ... ваш код отправки запроса ...
+}
+
+void RestClient::onLoginReply(QNetworkReply *reply) {
+    reply->deleteLater();
+    
+    if (reply->error() == QNetworkReply::NoError) {
+        // Парсим токен...
+        m_token = "полученный_токен";
+        emit tokenChanged();
+        
+        setAuthStatus(AuthStatus::LoggedIn); // Успех!
+        emit loginSuccess(m_token);
+    } else {
+        setAuthStatus(AuthStatus::AuthFailed); // Ошибка (например, 401 Unauthorized)
+        emit errorOccurred("Ошибка входа: " + reply->errorString());
+    }
+}
+
+void RestClient::onPingReply(QNetworkReply *reply) {
+    reply->deleteLater();
+    
+    if (reply->error() == QNetworkReply::NoError && 
+        reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200) {
+        setConnectionStatus(ConnectionStatus::Connected);
+    } else {
+        setConnectionStatus(ConnectionStatus::Disconnected);
+    }
+}
+
+
+import QtQuick
+import QtQuick.Controls
+import YourModule 1.0 // Замените на имя вашего URI модуля
+
+ApplicationWindow {
+    visible: true
+    width: 400
+    height: 600
+
+    RestClient {
+        id: client
+        baseUrl: "https://example.com"
+        
+        Component.onCompleted: startAutoPing(15) // пинг каждые 15 сек
+    }
+
+    Column {
+        anchors.centerIn: parent
+        spacing: 20
+
+        // 1. ИНДИКАТОР СЕТИ
+        Row {
+            spacing: 10
+            Rectangle {
+                width: 15; height: 15; radius: 7.5
+                // Цвет зависит от состояния соединения
+                color: client.connectionStatus === RestClient.Connected ? "green" :
+                       client.connectionStatus === RestClient.Disconnected ? "red" : "gray"
+            }
+            Text {
+                text: client.connectionStatus === RestClient.Connected ? "Онлайн" :
+                      client.connectionStatus === RestClient.Disconnected ? "Офлайн" : "Проверка сети..."
+            }
+        }
+
+        // 2. ФОРМА ЛОГИНА (Показывается, только если не авторизован)
+        Column {
+            visible: client.authStatus !== RestClient.LoggedIn
+            spacing: 10
+
+            TextField { id: userIn; placeholderText: "Логин" }
+            TextField { id: passIn; placeholderText: "Пароль"; echoMode: TextInput.Password }
+
+            Button {
+                text: "Войти"
+                // Блокируем кнопку, если сеть пропала ИЛИ уже идет процесс авторизации
+                enabled: client.connectionStatus === RestClient.Connected && 
+                         client.authStatus !== RestClient.Authenticating
+                
+                onClicked: client.login(userIn.text, passIn.text)
+            }
+            
+            // Текст ошибки или индикатор загрузки
+            Text {
+                color: "red"
+                text: client.authStatus === RestClient.AuthFailed ? "Неверный логин или пароль!" : ""
+            }
+            
+            BusyIndicator {
+                running: client.authStatus === RestClient.Authenticating
+            }
+        }
+
+        // 3. ЭКРАН ПРИЛОЖЕНИЯ (Показывается после успешного входа)
+        Column {
+            visible: client.authStatus === RestClient.LoggedIn
+            Text { text: "Добро пожаловать в систему!" }
+            Button {
+                text: "Загрузить список папок"
+                onClicked: client.fetchFolderList("root")
+            }
+        }
+
+
+    }
+}
+
+I need to realize separated /ping path.
+

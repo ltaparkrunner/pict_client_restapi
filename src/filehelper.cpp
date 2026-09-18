@@ -1,7 +1,10 @@
 #include "filehelper.h"
+#include "auxilary.h"
 
-FileHelper::FileHelper(WebSocketClient *wsc, QObject *parent) : QObject(parent), wsclient(wsc) {}
+//FileHelper::FileHelper(WebSocketClient *wsc, QObject *parent) : QObject(parent), wsclient(wsc) {}
+FileHelper::FileHelper(RestClient *rc, QObject *parent) : QObject(parent), restClient(rc) {}
 
+/*
 Q_INVOKABLE bool FileHelper::fileExists(const QString &path) {
     // Преобразуем QML URL (file:///...) в обычный путь, если нужно
     QString localPath = path;
@@ -62,7 +65,7 @@ Q_INVOKABLE int FileHelper::checkPathType(const QString &path) {
     }
     return Unknown;
 }
-
+*/
 Q_INVOKABLE QVariantMap FileHelper::extCheckPathType(const QString &path) {
 
     QString netPath;
@@ -129,6 +132,7 @@ Q_INVOKABLE QVariantMap FileHelper::extCheckPathType(const QString &path) {
     return result;
 }
 
+/*
 Q_INVOKABLE bool FileHelper::writeToFile(const QString &fileUrl, const QString &content) {
     // Преобразуем QML URL в локальный путь
     QString localPath = QUrl(fileUrl).toLocalFile();
@@ -256,3 +260,4 @@ Q_INVOKABLE int FileHelper::deleteMinioBuckets(const QStringList &paths) {
     wsclient->deleteMinioBucketsRequest(paths);
     return 0;
 }
+*/

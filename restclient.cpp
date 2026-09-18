@@ -8,12 +8,18 @@ RestClient::RestClient(QObject *parent)
     : QObject(parent), m_manager(new QNetworkAccessManager(this))
 {
     setupSslConfiguration();
+    m_pingTimer = new QTimer(this);
+    connect(m_pingTimer, &QTimer::timeout, this, &RestClient::checkConnection);
+
 }
 
 RestClient::RestClient(const QString &baseUrl, QObject *parent)
     : QObject(parent), m_manager(new QNetworkAccessManager(this)), m_baseUrl(baseUrl)
 {
     setupSslConfiguration();
+    m_pingTimer = new QTimer(this);
+    connect(m_pingTimer, &QTimer::timeout, this, &RestClient::checkConnection);
+
 }
 
 // Вспомогательный метод (можно объявить в private секции хедера restclient.h)
@@ -192,5 +198,59 @@ void RestClient::onRegisterReply(QNetworkReply *reply)
         } else {
             emit errorOccurred(reply->errorString());
         }
+    }
+}
+
+// Метод отправляет легкий запрос для проверки связи
+void RestClient::checkConnection() {
+    // Обычно используется эндпоинт вроде /api/ping или /api/health.
+    // Если такого нет, можно слать HEAD-запрос на baseUrl.
+    QNetworkRequest request = createRequest("/ping");
+
+    // Используем HEAD вместо GET, чтобы не качать тело ответа, только заголовки
+    QNetworkReply *reply = m_manager->head(request);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        this->onPingReply(reply);
+    });
+}
+
+// Слот для обработки ответа проверки связи
+void RestClient::onPingReply(QNetworkReply *reply) {
+    reply->deleteLater(); // Обязательно освобождаем память
+
+    // Проверяем на наличие сетевых ошибок (таймаут, нет сети, DNS ошибка)
+    if (reply->error() != QNetworkReply::NoError) {
+        emit connectionStatusChanged(false);
+        emit errorOccurred("Сервер недоступен: " + reply->errorString());
+        return;
+    }
+
+    // Проверяем HTTP-статус (200 OK считается успешным)
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 200) {
+        qWarning("Server is available");
+        emit connectionStatusChanged(true);
+    } else {
+        emit connectionStatusChanged(false);
+    }
+}
+
+// Метод для запуска периодического пинга
+void RestClient::startAutoPing(int intervalSeconds) {
+    if (!m_pingTimer->isActive()) {
+        // Переводим секунды в миллисекунды и запускаем
+        m_pingTimer->start(intervalSeconds * 1000);
+
+        // Рекомендуется сделать первый вызов сразу,
+        // чтобы не ждать окончания первого интервала таймера
+        checkConnection();
+    }
+}
+
+// Метод для остановки пинга (например, при переходе приложения в спящий режим)
+void RestClient::stopAutoPing() {
+    if (m_pingTimer->isActive()) {
+        m_pingTimer->stop();
     }
 }
