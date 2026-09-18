@@ -5,6 +5,7 @@
 // #include "authhandler.h"
 #include "restclient.h"
 #include "filehelper.h"
+#include "unifiedstoragemodel.h"
 // #include "msghandler.h"
 
 int main(int argc, char *argv[]) {
@@ -19,11 +20,14 @@ int main(int argc, char *argv[]) {
     RestClient rest_clt("https://localhost:8082");
     FileHelper fileHlp(&rest_clt);
 
+    UnifiedStorageModel usModel(&rest_clt);
+
     QQmlApplicationEngine engine;
 
     RestClient restClient("https://localhost:8080");
     engine.rootContext()->setContextProperty("restClient", &restClient);
     engine.rootContext()->setContextProperty("FileHelper", &fileHlp);
+    engine.rootContext()->setContextProperty("storageModel", &usModel);
 
     qmlRegisterUncreatableType<FileHelper>("com.myapp.helpers", 1, 0, "FileHelperType", "Error: FileHelperType is enum only");
 

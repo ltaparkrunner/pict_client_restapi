@@ -52,6 +52,108 @@ ApplicationWindow {
         }
     }
 
+    CustomFileDialog {
+        id: customDialog
+
+        Binding {
+            target: customDialog
+            property: "currentLocalPath"
+            value: rootWnd.parentLocalPath
+        }
+        Binding {
+            target: customDialog
+            property: "currentNetworkPath"
+            value: rootWnd.parentNetworkPath
+        }
+        Binding {
+            target: customDialog
+            property: "currentTabIndex"
+            value: rootWnd.parentCustomDlgTb
+        }
+        onOpenIndexSelected:(index) => {
+            //  console.log("onOpenIndexSelected: ", index, " rows: ", storageModel.rowCount())
+            if(index>=0 && index<storageModel.rowCount()){
+                let img = storageModel.get(index)
+                let imgPath = img.path;
+                let prefix = "file:///";
+                if(!img.isMinio && !imgPath.startsWith(prefix)){
+                    mainImageSource = prefix + imgPath
+                }
+                else mainImageSource = imgPath
+                //  console.log("onOpenIndexSelected: ", imgPath);
+                let data = storageModel.getData(index);
+                console.log("onOpenIndexSelected: cleanPath: ", data.cleanPath, " isMinio: ", data.isMinio)
+                //  console.log("onOpenIndexSelected: ", index);
+                imageModel.insertImage(data);
+            }
+            else console.log("Путь не распознан или не существует 1");
+        }
+        onOpenIndicesSelected:(indices) => {
+            let maxindx = storageModel.rowCount()
+            let arr = []
+            let succ = 0
+            let dir = 0
+            let dirToGo
+            for(let indx of indices) {
+                //  console.log("onOpenIndicesSelected indx: ", indx)
+                if(indx>=0 && indx < maxindx){
+                    let img = storageModel.get(indx);
+                    if(!img.isDir && !img.isMinioBucket && !img.VirtualDir) {
+                        if(!succ){
+                            let imgPath = img.path;
+                            let prefix = "file:///";
+                            if(!img.isMinio && !imgPath.startsWith(prefix)){
+                                mainImageSource = prefix + imgPath
+                            }
+                            else mainImageSource = imgPath
+                            succ = 1
+                        }
+                        let data = storageModel.getData(indx)
+                        arr.push(data)
+                    }
+                    else if((dir===0) && (img.isDir ||  img.isMinioBucket)){
+                        dirToGo = {indx:indx, isDir:img.isDir, isMinio:img.isMinio, isBucket:img.isMinioBucket}; dir = 1;
+                    }
+                }
+            }
+            imageModel.insertImages(arr);
+            if(dirToGo !== null && dirToGo !== undefined)  // TODO:
+                if(dirToGo.dirToGo.isDir && !dirToGo.isMinio)   {       //TODO: qrc:/qt/qml/pict_client/qml/Main.qml:117: TypeError: Cannot read property 'isDir' of undefined
+                        console.log("storageModel.enterLocal(dirToGo.indx", dirToGo.indx)
+                        storageModel.enterLocal(dirToGo.indx)
+                    }
+                else if(dirToGo.isBucket)     storageModel.enterMinioBucket(dirToGo.indx)
+                else if(dirToGo.isDir && dirToGo.isMinio && !dirToGo.isBucket)  storageModel.enterNetStore(dirToGo.indx)
+        }
+        onWriteImages: (lf, path) => {
+            //  console.log("onWritePathsSelected paths: ", path)
+            storageModel.writeImagesToFolder(lf, path);
+        }
+        onDeletePathsSelected:(indices) => {
+            if(indices){
+                storageModel.deleteIndices(indices)
+            }
+        }
+
+        onSetParentPaths:(tbIndx, localPath, networkPath, nwCleanPath) => {
+            console.log("tbIndx: ", tbIndx, " networkPath: ", networkPath, " nwCleanPath: ", nwCleanPath)
+            if(tbIndx === 0) {
+                parentCustomDlgTb = 0;
+                parentLocalPath = localPath;
+                console.log("tf.tfContent = localPath 1")
+                tf.tfContent = localPath;
+            }
+            else {
+                parentCustomDlgTb = 1;
+                parentNetworkPath = networkPath;
+                cleanNetworkPath = nwCleanPath
+                // console.log("tf.tfContent = cleanNetworkPath")
+                // tf.tfContent = cleanNetworkPath;
+                tf.tfContent = nwCleanPath
+            }
+        }
+    }
+
     MessageDialog {
         id: msgNothingToDo
         title: "Nothing To Do"  // "Подтверждение"

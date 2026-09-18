@@ -15,8 +15,12 @@
 class RestClient : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT // Если RestClient тоже регистрируется в QML
 
     // Expose baseUrl and token as QML properties so QML can read/bind them if needed
+    // Q_PROPERTY(ConnStatus* status READ status CONSTANT)
+    Q_PROPERTY(ConnStatus::ConnectionStatus connStatus READ connStatus CONSTANT)
+    Q_PROPERTY(ConnStatus::AuthStatus authStatus READ authStatus CONSTANT)
     Q_PROPERTY(QString baseUrl READ baseUrl WRITE setBaseUrl NOTIFY baseUrlChanged)
     Q_PROPERTY(QString token READ token NOTIFY tokenChanged)
 
@@ -30,6 +34,10 @@ public:
     void setBaseUrl(const QString &url);
 
     QString token() const { return m_token; }
+
+    // ConnStatus* status() const { return m_status; }
+    ConnStatus::ConnectionStatus connStatus() const {return m_status.connectionStatus();}
+    ConnStatus::AuthStatus authStatus() const {return m_status.authStatus();}
 
     // Mark methods as Q_INVOKABLE so they can be called directly from QML Javascript elements
     Q_INVOKABLE void login(const QString &username, const QString &password);
@@ -56,6 +64,7 @@ signals:
     void tokenChanged();
     void connectionStatusChanged(bool connected);
 
+    void errReceived();
 private slots:
     void onLoginReply(QNetworkReply *reply);
     void onUploadReply(QNetworkReply *reply);
@@ -65,6 +74,7 @@ private slots:
 
 private:
     QNetworkAccessManager *m_manager;
+    ConnStatus m_status; // Объект статуса
     QString m_baseUrl;
     QString m_token;
 

@@ -8,7 +8,7 @@ import QtQuick.Controls.Basic
 import Qt.labs.platform 1.1
 import com.myapp.helpers 1.0
 import QtCore
-import pict_client
+import pict_client_restapi
 
 Window {
 //Dialog {
@@ -57,19 +57,23 @@ Window {
         }
     }
 
-    WarningDialog {
-        id: warningDialog
-        messageText: "Are you sure you want to delete this file? This action cannot be undone."
-        // onAccepted: console.log("User clicked OK")
-        // onRejected: console.log("User clicked Cancel")
+    RestClient {
+        id: client
     }
 
-    FolderDialog {
-        id: folderDialog
-        onFolderAccepted: (name) => {
-            storageModel.addVirtual(name, tabBar.currentIndex === 0 ? currentLocalPath : currentNetworkPath);
-        }
-    }
+    // WarningDialog {
+    //     id: warningDialog
+    //     messageText: "Are you sure you want to delete this file? This action cannot be undone."
+    //     // onAccepted: console.log("User clicked OK")
+    //     // onRejected: console.log("User clicked Cancel")
+    // }
+
+    // FolderDialog {
+    //     id: folderDialog
+    //     onFolderAccepted: (name) => {
+    //         storageModel.addVirtual(name, tabBar.currentIndex === 0 ? currentLocalPath : currentNetworkPath);
+    //     }
+    // }
 
     ColumnLayout {
         anchors.fill: parent
@@ -450,7 +454,8 @@ Window {
             }
             Item {
                 anchors.fill: parent
-                visible: ((wsClient.authConnectionState !== WebSocketClient.Authorized) && (nw_storage.activeFocus))
+                // visible: ((wsClient.authConnectionState !== WebSocketClient.Authorized) && (nw_storage.activeFocus))
+                visible: ((client.authStatus !== ConnStatus.Authenticating) && (nw_storage.activeFocus))
                 Text {
                     anchors.centerIn: parent
                     text: "No network connection."

@@ -4,7 +4,7 @@
 MsgHandler::MsgHandler(RestClient *client, QObject *parent)
     : QObject(parent), m_client(client)
 {
-    connect(m_client, &WebSocketClient::serverResponseReceived,
+    connect(m_client, &RestClient::serverResponseReceived,
             this, &MsgHandler::handleIncomingServerData);
 }
 

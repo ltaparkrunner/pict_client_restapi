@@ -6,6 +6,8 @@
 
 RestClient::RestClient(QObject *parent)
     : QObject(parent), m_manager(new QNetworkAccessManager(this))
+    ,m_status(this)
+//    ,m_status(this))
 {
     setupSslConfiguration();
     m_pingTimer = new QTimer(this);

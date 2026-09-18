@@ -17,6 +17,9 @@ qt_add_qml_module(${PROJECT_NAME}
     URI pict_client_restapi
     VERSION 1.0
     QML_FILES qml/Main.qml
+        qml/CustomFileDialog.qml
+        qml/WarnDialog.qml
+        qml/FolderDialog.qml
     SOURCES
         restclient.h restclient.cpp
         inc/filehelper.h src/filehelper.cpp
@@ -24,7 +27,7 @@ qt_add_qml_module(${PROJECT_NAME}
         # 2. Переносим файл сюда и ОБЯЗАТЕЛЬНО создаем/добавляем для него .cpp файл
         inc/connstatus.h
         # inc/msghandler.h src/msghandler.cpp
-        # inc/unifiedstoragemodel.h src/unifiedstoragemodel.cpp
+        inc/unifiedstoragemodel.h src/unifiedstoragemodel.cpp
     RESOURCES
         icons/clover_transparent.png
         icons/cherry-blossom.png
