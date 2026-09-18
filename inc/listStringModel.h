@@ -11,7 +11,7 @@
 
 //#include "websocketclient.h"
 #include "restclient.h"
-#include "msghandler.h"
+// #include "msghandler.h"
 #include "auxilary.h"
 
 struct ImageItem {
@@ -30,13 +30,13 @@ public:
         ImageNameRole = Qt::UserRole + 16, ImagePathRole, ImageCleanPathRole, ImageIsNetworkRole, ImageIsDirRole, ImageMongoIdRole
     };
 
-    explicit ImageModel(WebSocketClient *wsc, MsgHandler *msgh, QObject *parent = nullptr) :
+//    explicit ImageModel(WebSocketClient *wsc, MsgHandler *msgh, QObject *parent = nullptr) :
+    explicit ImageModel(RestClient *rc, QObject *parent = nullptr) :
         QAbstractListModel(parent)
-        , wsclient (wsc)
-        , msghandler (msgh)
+        , restClient(rc)
     {
-        connect(msghandler, &MsgHandler::filePathResp, this, &ImageModel:: minioImgToQML);
-        connect(wsclient, &WebSocketClient::filesReceived, this, &ImageModel::minioPathsToQML);
+        // connect(msghandler, &MsgHandler::filePathResp, this, &ImageModel:: minioImgToQML);
+        // connect(wsclient, &WebSocketClient::filesReceived, this, &ImageModel::minioPathsToQML);
     }
 
     // 1. Return number of items
@@ -138,11 +138,11 @@ public:
         return pathForQml;
     }
 
-    Q_INVOKABLE QStringList addImagesFromMinioBucket(const QString &path) {
-        QString fileName = QUrl(path).fileName();
-        wsclient->getFilesOnlyListfromBucketRequest(fileName/*, imodel*/);
-        return {};
-    }
+    // Q_INVOKABLE QStringList addImagesFromMinioBucket(const QString &path) {
+    //     QString fileName = QUrl(path).fileName();
+    //     wsclient->getFilesOnlyListfromBucketRequest(fileName/*, imodel*/);
+    //     return {};
+    // }
 
     Q_INVOKABLE QString  minioPathsToQML(const QList<QStringList> &files) {
         for (const QStringList &image : std::as_const(files)) {
@@ -227,7 +227,7 @@ public:
 
     }
     Q_INVOKABLE int insertImage(const QVariantMap &map) {
-
+        qDebug() << "Q_INVOKABLE int insertImage(const QVariantMap &map)";
         bool isDir = map["isDir"].toBool();
 //        bool isNetwork = map["isNetwork"].toBool();
         bool isNetwork = map["isMinio"].toBool();
@@ -286,8 +286,9 @@ signals:
 private:
 //    QStringList m_imagePaths;
     QVector<ImageItem> m_imageItems;
-    WebSocketClient *wsclient;
-    MsgHandler *msghandler;
+//    WebSocketClient *wsclient;
+//    MsgHandler *msghandler;
+    RestClient *restClient;
 };
 
 #endif // LISTSTRINGMODEL_H

@@ -55,13 +55,14 @@ public:
 // //    Q_INVOKABLE void enterNetStore2(const QString &path);        // Зайти в список бакетов MinIO
 //     Q_INVOKABLE void enterMinioBucket(const QString &path);
 //     Q_INVOKABLE int openFolderImages(int indx);
-//     Q_INVOKABLE int enterFolder(int indx);
+    Q_INVOKABLE int enterFolder(int indx);
 //     Q_INVOKABLE bool getNetPath(const QString &path, int type);
 //     Q_INVOKABLE int deleteIndices(const QList<int> &indxs);
 //     //  Q_INVOKABLE int writeToFolder(const QStringList &ls);
 //     Q_INVOKABLE void minioPathsToQML(const QList<QStringList> &paths, const QString &folderName);
-//     Q_INVOKABLE void minioBucketsToQML(const QStringList &paths);
-//     Q_INVOKABLE QVariantMap get(int row) const;
+    Q_INVOKABLE void minioPathsToQML(const QJsonObject &listData);
+    Q_INVOKABLE void minioBucketsToQML(const QStringList &paths);
+     Q_INVOKABLE QVariantMap get(int row) const;
 
 //     Q_INVOKABLE int addVirtual(const QString &virtFolderName, const QString &currPath);
 //     QStringList getBacketNameFromPath(const QString &path);

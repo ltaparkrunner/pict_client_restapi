@@ -28,6 +28,7 @@ qt_add_qml_module(${PROJECT_NAME}
         inc/connstatus.h
         # inc/msghandler.h src/msghandler.cpp
         inc/unifiedstoragemodel.h src/unifiedstoragemodel.cpp
+        inc/listStringModel.h
     RESOURCES
         icons/clover_transparent.png
         icons/cherry-blossom.png

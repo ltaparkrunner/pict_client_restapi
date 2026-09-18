@@ -10,7 +10,7 @@ UnifiedStorageModel::UnifiedStorageModel(RestClient *rc, QObject *parent)
 //    , workPath("https://minio:9000")
     , workPath (netPrefixes[0])
 {
-    // connect(msghandler, &MsgHandler::pathsReceived, this, &UnifiedStorageModel::minioPathsToQML);
+    connect(restClient, &RestClient::folderListReceived, this, &UnifiedStorageModel::minioPathsToQML);
     // connect(restClient, &RestClient::errReceived, this, [=](){
 
     //     beginResetModel();
@@ -19,7 +19,7 @@ UnifiedStorageModel::UnifiedStorageModel(RestClient *rc, QObject *parent)
     // });
     // connect(msghandler, &MsgHandler::writeUrlsToLocal, this, &UnifiedStorageModel::writeUrlsToLocal);
     // connect(msghandler, &MsgHandler::pathInfoResp, this, &UnifiedStorageModel::openNetStoreDialog);
-    // connect(msghandler, &MsgHandler::bucketsReceived, this, &UnifiedStorageModel::minioBucketsToQML);
+    // connect(restClient, &RestClient::bucketsReceived, this, &UnifiedStorageModel::minioBucketsToQML);
 }
 
 void UnifiedStorageModel::enterLocal(const QString &path) {
@@ -56,53 +56,58 @@ void UnifiedStorageModel::enterLocal(const QString &path) {
 //     msghandler->getFilesFoldersListfromBucketRequest(m_parentItem.path, "" /*, usmodel*/);
 // }
 
-// void UnifiedStorageModel::minioBucketsToQML(const QStringList &buckets) {
+void UnifiedStorageModel::minioBucketsToQML(const QStringList &buckets) {
 
-//     beginResetModel();
-//     m_items.clear();
+    beginResetModel();
+    m_items.clear();
 
-//     for (int i = 0; i < buckets.size(); i += 2) {
-//         m_items.append({buckets[i], buckets[i+1], buckets[i+1], true, true, true, false});
-//     }
-//     endResetModel();
-// }
+    for (int i = 0; i < buckets.size(); i += 2) {
+        m_items.append({buckets[i], buckets[i+1], buckets[i+1], true, true, true, false});
+    }
+    endResetModel();
+}
 
 // void UnifiedStorageModel::minioPathsToQML(const QList<QStringList> &paths, const QString &netFolderPath) {
+void UnifiedStorageModel::minioPathsToQML(const QJsonObject &listData) {
+    qDebug() << "void UnifiedStorageModel::minioPathsToQML(const QJsonObject &listData)";
+    qDebug() << listData;
+/*
+    beginResetModel();
+    m_items.clear();
+    QUrl url(netFolderPath);
 
-//     beginResetModel();
-//     m_items.clear();
-//     QUrl url(netFolderPath);
+    QFileInfo info(url.toString());
+    info.fileName();
+    QString npath = extCleanNetworkFilePath(netFolderPath);
 
-//     QFileInfo info(url.toString());
-//     info.fileName();
-//     QString npath = extCleanNetworkFilePath(netFolderPath);
+    bool bucket = false;
+    if(netFolderPath == netPrefixes[0] || netFolderPath == netPrefixes[1] || netFolderPath == netPrefixes[2] ||
+        netFolderPath == netPrefixes[0]+"/" || netFolderPath == netPrefixes[1]+"/" || netFolderPath == netPrefixes[2]+"/")
+        bucket = true;
+    m_parentItem = {info.fileName(), netFolderPath, extCleanNetworkFilePath(netFolderPath), true, true, bucket, true};
 
-//     bool bucket = false;
-//     if(netFolderPath == netPrefixes[0] || netFolderPath == netPrefixes[1] || netFolderPath == netPrefixes[2] ||
-//         netFolderPath == netPrefixes[0]+"/" || netFolderPath == netPrefixes[1]+"/" || netFolderPath == netPrefixes[2]+"/")
-//         bucket = true;
-//     m_parentItem = {info.fileName(), netFolderPath, extCleanNetworkFilePath(netFolderPath), true, true, bucket, true};
+    int symbs = npath.count('/');
 
-//     int symbs = npath.count('/');
+    if(symbs <=4) {
+        m_items.append({"..", netPrefixes[0]+"/" , netPrefixes[0]+"/", true, true, true, false});
+    }
+    else {
+        int prevSlashIdx = npath.lastIndexOf('/', -2);
+        if (prevSlashIdx != -1) {
+            m_items.append({"..", npath.left(prevSlashIdx + 1), npath.left(prevSlashIdx + 1), true, true, false, false});
+        }
+        else {
+            m_items.append({"..", netPrefixes[0]+"/",  netPrefixes[0]+"/", true, true, true, false});
+        }
+    }
+    for (const QStringList& image : paths) {
+        if(image[2] != "folder") m_items.append({image[0], image[1],  extCleanNetworkFilePath(image[1]), false, true, false, false, image[3]});
+        else m_items.append({image[0], image[1],  image[1], true, true, false, false, image[3]});
+    }
+    endResetModel();
+*/
 
-//     if(symbs <=4) {
-//         m_items.append({"..", netPrefixes[0]+"/" , netPrefixes[0]+"/", true, true, true, false});
-//     }
-//     else {
-//         int prevSlashIdx = npath.lastIndexOf('/', -2);
-//         if (prevSlashIdx != -1) {
-//             m_items.append({"..", npath.left(prevSlashIdx + 1), npath.left(prevSlashIdx + 1), true, true, false, false});
-//         }
-//         else {
-//             m_items.append({"..", netPrefixes[0]+"/",  netPrefixes[0]+"/", true, true, true, false});
-//         }
-//     }
-//     for (const QStringList& image : paths) {
-//         if(image[2] != "folder") m_items.append({image[0], image[1],  extCleanNetworkFilePath(image[1]), false, true, false, false, image[3]});
-//         else m_items.append({image[0], image[1],  image[1], true, true, false, false, image[3]});
-//     }
-//     endResetModel();
-// }
+}
 
 // 1. Return number of items
 int UnifiedStorageModel::rowCount(const QModelIndex &parent) const {
@@ -165,26 +170,26 @@ QHash<int, QByteArray> UnifiedStorageModel::roleNames() const{
 //     endResetModel();
 // }
 
-// Q_INVOKABLE QVariantMap UnifiedStorageModel::get(int row) const {
-//     // Проверка границ, чтобы избежать падения
-//     if (row < 0 || row >= m_items.count()) {
-//         return QVariantMap();
-//     }
+Q_INVOKABLE QVariantMap UnifiedStorageModel::get(int row) const {
+    // Проверка границ, чтобы избежать падения
+    if (row < 0 || row >= m_items.count()) {
+        return QVariantMap();
+    }
 
-//     const StorageItem &item = m_items.at(row);
-//     QVariantMap res;
+    const StorageItem &item = m_items.at(row);
+    QVariantMap res;
 
-// //    Вручную наполняем карту данными
-//     res["name"] = item.name;
-//     res["path"] = item.path;
-//     res["cleanPath"] = item.cleanPath;
-//     res["isDir"] = item.isDirectory;
-//     res["isMinio"] = item.isMinio;
-//     res["isMinioBucket"] = item.isMinioBucket;
-//     res["isVirtualDir"] = item.isVirtualDir;
-//     res["mongoId"] = item.mongoId;
-//     return res;
-// }
+//    Вручную наполняем карту данными
+    res["name"] = item.name;
+    res["path"] = item.path;
+    res["cleanPath"] = item.cleanPath;
+    res["isDir"] = item.isDirectory;
+    res["isMinio"] = item.isMinio;
+    res["isMinioBucket"] = item.isMinioBucket;
+    res["isVirtualDir"] = item.isVirtualDir;
+    res["mongoId"] = item.mongoId;
+    return res;
+}
 
 // Q_INVOKABLE int UnifiedStorageModel::addVirtual(const QString &virtFolderName, const QString &currPath){
 
@@ -242,55 +247,58 @@ QHash<int, QByteArray> UnifiedStorageModel::roleNames() const{
 //     return 0;
 // }
 
-// Q_INVOKABLE int UnifiedStorageModel::enterFolder(int indx){ // Open folder in File/Folder Dialog
-//     qDebug() << "int UnifiedStorageModel::enterFolder(StorageItem item): " << m_items[indx].path << "  name: " << m_items[indx].name <<
-//         "m_items[indx].isMinio" << m_items[indx].isMinio << "m_items[indx].isDir" << m_items[indx].isDirectory;
-//     StorageItem prevprevItem = m_parentItem;
-//     if(indx < m_items.size()) m_parentItem = m_items[indx];
-//     else return -1;
+Q_INVOKABLE int UnifiedStorageModel::enterFolder(int indx){ // Open folder in File/Folder Dialog
+    qDebug() << "int UnifiedStorageModel::enterFolder(StorageItem item): " << m_items[indx].path << "  name: " << m_items[indx].name <<
+        "m_items[indx].isMinio" << m_items[indx].isMinio << "m_items[indx].isDir" << m_items[indx].isDirectory;
+    StorageItem prevprevItem = m_parentItem;
+    if(indx < m_items.size()) m_parentItem = m_items[indx];
+    else return -1;
 
-//     if(!m_parentItem.isMinio && m_parentItem.isDirectory){ // Local Directory
-//         beginResetModel();
-//         m_items.clear();
-//         QDir dir(m_parentItem.path);
+    if(!m_parentItem.isMinio && m_parentItem.isDirectory){ // Local Directory
+        beginResetModel();
+        m_items.clear();
+        QDir dir(m_parentItem.path);
 
-//         QStringList filters;
-//         filters << "*.jpg" << "*.jpeg" << "*.png" << "*.gif" << "*.bmp" << "*.webp";
+        QStringList filters;
+        filters << "*.jpg" << "*.jpeg" << "*.png" << "*.gif" << "*.bmp" << "*.webp";
 
-//         QFileInfoList files = dir.entryInfoList(filters, QDir::AllEntries | QDir::NoDot, QDir::DirsFirst);
+        QFileInfoList files = dir.entryInfoList(filters, QDir::AllEntries | QDir::NoDot, QDir::DirsFirst);
 
-//         QFileInfoList dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDot, QDir::DirsFirst);
-//         QFileInfoList fullList = dirs + files;
+        QFileInfoList dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDot, QDir::DirsFirst);
+        QFileInfoList fullList = dirs + files;
 
-//         for (const QFileInfo &info : std::as_const(fullList)) {
-//             m_items.append({info.fileName(), info.absoluteFilePath(),  info.absoluteFilePath(), info.isDir(), false, false, false});
-//         }
-//         endResetModel();
-//         return 0;
-//     }
-//     else if(m_parentItem.isMinio && m_parentItem.isMinioBucket) { // Minio Bucket
-//         if(m_parentItem.path == netPrefixes[0]+"/" || m_parentItem.path == netPrefixes[1]+"/" || m_parentItem.path == netPrefixes[2]+"/") {
-//             msghandler->getBucketsListRequest();
-//         }
-//         else {
-//             msghandler->getFilesFoldersListfromBucketRequest(m_parentItem.path, "" /*, usmodel*/);
-//         }
-//         return 0;
-//     }
-//     else if(m_parentItem.isMinio && !m_parentItem.isMinioBucket && m_parentItem.isDirectory && !m_parentItem.isVirtualDir) {
-//         msghandler->getFilesFoldersListfromBucketRequest2(m_parentItem.path, true  /*, us:model*/);
-//         return 0;               // Minio simple folder
-//     }
-//     else if(m_parentItem.isMinio && !m_parentItem.isMinioBucket && m_parentItem.isDirectory && m_parentItem.isVirtualDir) {
-//         beginResetModel();
-//         m_items.clear();
-//         m_items.append({"..", prevprevItem.path,  prevprevItem.path, prevprevItem.isDirectory, prevprevItem.isMinio,
-//                         prevprevItem.isMinioBucket, prevprevItem.isVirtualDir});
-//         endResetModel();
-//         return 0;   // Minio simple folder
-//     }
-//     return 0;
-// }
+        for (const QFileInfo &info : std::as_const(fullList)) {
+            m_items.append({info.fileName(), info.absoluteFilePath(),  info.absoluteFilePath(), info.isDir(), false, false, false});
+        }
+        endResetModel();
+        return 0;
+    }
+    else if(m_parentItem.isMinio && m_parentItem.isMinioBucket) { // Minio Bucket
+        if(m_parentItem.path == netPrefixes[0]+"/" || m_parentItem.path == netPrefixes[1]+"/" || m_parentItem.path == netPrefixes[2]+"/") {
+            // msghandler->getBucketsListRequest();    18_09_2026
+            restClient->fetchFolderList("https://");
+        }
+        else {
+            // msghandler->getFilesFoldersListfromBucketRequest(m_parentItem.path, "" /*, usmodel*/);   18_09_2026
+            restClient->fetchFolderList(m_parentItem.path);
+        }
+        return 0;
+    }
+    else if(m_parentItem.isMinio && !m_parentItem.isMinioBucket && m_parentItem.isDirectory && !m_parentItem.isVirtualDir) {
+        // msghandler->getFilesFoldersListfromBucketRequest2(m_parentItem.path, true  /*, us:model*/);      18_09_2026
+        restClient->fetchFolderList(m_parentItem.path);
+        return 0;               // Minio simple folder
+    }
+    else if(m_parentItem.isMinio && !m_parentItem.isMinioBucket && m_parentItem.isDirectory && m_parentItem.isVirtualDir) {
+        beginResetModel();
+        m_items.clear();
+        m_items.append({"..", prevprevItem.path,  prevprevItem.path, prevprevItem.isDirectory, prevprevItem.isMinio,
+                        prevprevItem.isMinioBucket, prevprevItem.isVirtualDir});
+        endResetModel();
+        return 0;   // Minio simple folder
+    }
+    return 0;
+}
 
 // Q_INVOKABLE int UnifiedStorageModel::deleteIndices(const QList<int> &indxs){
 //     qDebug() << "int UnifiedStorageModel::deleteIndices";

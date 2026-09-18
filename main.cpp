@@ -6,7 +6,7 @@
 #include "restclient.h"
 #include "filehelper.h"
 #include "unifiedstoragemodel.h"
-// #include "msghandler.h"
+#include "listStringModel.h"
 
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
     FileHelper fileHlp(&rest_clt);
 
     UnifiedStorageModel usModel(&rest_clt);
+    ImageModel imgModel(&rest_clt);
 
     QQmlApplicationEngine engine;
 
@@ -28,6 +29,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("restClient", &restClient);
     engine.rootContext()->setContextProperty("FileHelper", &fileHlp);
     engine.rootContext()->setContextProperty("storageModel", &usModel);
+    engine.rootContext()->setContextProperty("imageModel", &imgModel);
 
     qmlRegisterUncreatableType<FileHelper>("com.myapp.helpers", 1, 0, "FileHelperType", "Error: FileHelperType is enum only");
 
