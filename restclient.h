@@ -49,6 +49,8 @@ public:
     Q_INVOKABLE void checkConnection();
     Q_INVOKABLE void startAutoPing(int intervalSeconds = 30); // Запуск таймера (по умолчанию 30 сек)
     Q_INVOKABLE void stopAutoPing();                          // Остановка таймера
+    void getNetStore(const QString &path){}
+    void getFileNetStore(const QString &path){}
 
 
 signals:
@@ -74,7 +76,9 @@ private slots:
 
 private:
     QNetworkAccessManager *m_manager;
+public:
     ConnStatus m_status; // Объект статуса
+private:
     QString m_baseUrl;
     QString m_token;
 

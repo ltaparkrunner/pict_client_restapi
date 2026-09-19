@@ -494,27 +494,29 @@ Q_INVOKABLE QVariantMap UnifiedStorageModel::getData(int indx){
 //     return 0;
 // }
 
-// Q_INVOKABLE bool UnifiedStorageModel::getNetPath(const QString &path, int type){
-//     qDebug() << "UnifiedStorageModel::getNetPath netPrefixes[0]: " << netPrefixes[0] << " netPrefixes[1]: " << netPrefixes[1] << "  path: " << path;
-//     workPath = path;
-//     if (path.startsWith(netPrefixes[2], Qt::CaseInsensitive)) {
-//         workPath.replace(0, 4, netPrefixes[0]);
-//     }
-//     if(path.startsWith(netPrefixes[0]) || path.startsWith(netPrefixes[1]) || path.startsWith(netPrefixes[2]) ) {
-//         if(type != 'f') msghandler -> getNetStore(workPath);
-//         else   msghandler -> getFileNetStore(workPath);
-//         return true;
-//     }  // if exist and file, if exist and dir
-//     else return false;
-// }
+Q_INVOKABLE bool UnifiedStorageModel::getNetPath(const QString &path, int type){
+    qDebug() << "UnifiedStorageModel::getNetPath netPrefixes[0]: " << netPrefixes[0] << " netPrefixes[1]: " << netPrefixes[1] << "  path: " << path;
+    workPath = path;
+    if (path.startsWith(netPrefixes[2], Qt::CaseInsensitive)) {
+        workPath.replace(0, 4, netPrefixes[0]);
+    }
+    if(path.startsWith(netPrefixes[0]) || path.startsWith(netPrefixes[1]) || path.startsWith(netPrefixes[2]) ) {
+        // if(type != 'f') restClient -> getNetStore(workPath);
+        // else   restClient -> getFileNetStore(workPath);
+        if(type != 'f') restClient -> getNetStore(workPath);
+        else   restClient -> getFileNetStore(workPath);
+        return true;
+    }  // if exist and file, if exist and dir
+    else return false;
+}
 
-// Q_INVOKABLE void UnifiedStorageModel::setParent(const QString &fullPath, const QString &type){
-//     QFileInfo fileInfo(fullPath);
-//     qDebug() << "UnifiedStorageModel::setParent fileInfo.fileName():" << fileInfo.fileName();
-//     if(type == "mb") m_parentItem = {fileInfo.fileName(), fullPath, fullPath, true, true, true, false};
-//     if(type == "md") m_parentItem = {fileInfo.fileName(), fullPath, fullPath, true, true, false, false};
-//     if(type == "mf") m_parentItem = {fileInfo.fileName(), fullPath, fullPath, false, true, false, false};
-// }
+Q_INVOKABLE void UnifiedStorageModel::setParent(const QString &fullPath, const QString &type){
+    QFileInfo fileInfo(fullPath);
+    qDebug() << "UnifiedStorageModel::setParent fileInfo.fileName():" << fileInfo.fileName();
+    if(type == "mb") m_parentItem = {fileInfo.fileName(), fullPath, fullPath, true, true, true, false};
+    if(type == "md") m_parentItem = {fileInfo.fileName(), fullPath, fullPath, true, true, false, false};
+    if(type == "mf") m_parentItem = {fileInfo.fileName(), fullPath, fullPath, false, true, false, false};
+}
 
 // Q_INVOKABLE QVariantMap UnifiedStorageModel::getParent(){
 //     QVariantMap res;

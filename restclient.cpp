@@ -90,6 +90,8 @@ void RestClient::onLoginReply(QNetworkReply *reply)
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         m_token = doc.object().value("token").toString();
         emit loginSuccess(m_token);
+        m_status.setConnectionStatus(ConnStatus::Connected);
+        m_status.setAuthStatus(ConnStatus::LoggedIn);
     } else {
         emit errorOccurred("Логин не удался: " + reply->errorString());
     }

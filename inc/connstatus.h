@@ -16,7 +16,7 @@ public:
     enum ConnectionStatus { Unchecked, Connected, Disconnected };
     Q_ENUM(ConnectionStatus)
 
-    enum AuthStatus { LoggedOut, Authenticating, LoggedIn, AuthFailed };
+    enum AuthStatus { LoggedOut = 10, Authenticating, LoggedIn, AuthFailed };
     Q_ENUM(AuthStatus)
 
     explicit ConnStatus(QObject *parent = nullptr) : QObject(parent) {}
@@ -29,7 +29,14 @@ public slots: // Делаем сеттеры публичными слотами
         if (m_connectionStatus != status) { m_connectionStatus = status; emit connectionStatusChanged(status); }
     }
     void setAuthStatus(AuthStatus status) {
-        if (m_authStatus != status) { m_authStatus = status; emit authStatusChanged(status); }
+        if (m_authStatus != status) { m_authStatus = status;
+            switch(m_authStatus){
+                case LoggedOut: qDebug() << "LoggedOut"; break;
+                case Authenticating: qDebug() << "Authenticating"; break;
+                case LoggedIn: qDebug() << "LoggedIn"; break;
+                case AuthFailed: qDebug() << "AuthFailed"; break;
+            }
+            emit authStatusChanged(status); }
     }
 
 signals:

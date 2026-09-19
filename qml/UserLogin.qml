@@ -44,11 +44,44 @@ Dialog {
     //     }
     // }
 
+//     Connections {
+//         target: restClient
+// //        function onAuthConnectionStateChanged(){
+//         function onConnectionStatusChanged(){
+//             console.log("function authConnectionStateChanged")
+// //            if(client.authConnectionState === WebSocketClient.Authorized) {
+//             if(client.authStatus === ConnStatus.Authenticating) {
+//                 console.log("function authConnectionStateChanged Succ")
+//                 statusText.color = "green"
+//                 statusText.text = "Вход успешно выполнен!"
+//                 // Здесь можно закрыть диалог или переключить экран через Delay
+//                 loginTimer.start()
+//                 loginButton.enabled = true
+//             }
+// //            if(restClient.authConnectionState === WebSocketClient.NotAuthorized) {
+//             if(client.authStatus === ConnStatus.Authenticating) {
+//                 console.log("function authConnectionStateChanged Err")
+//                 statusText.color = "red"
+//                 statusText.text = "Authorization error, check your login and password."
+//                 loginButton.enabled = true
+//             }
+// //            if(restClient.authConnectionState === WebSocketClient.NoConnection) {
+//             if(client.authStatus !== ConnStatus.Connected) {
+//                 console.log("function authConnectionStateChanged Err")
+//                 statusText.color = "red"
+//                 statusText.text = "No network connection. Check your network."
+//                 loginTimer.start()
+//                 loginButton.enabled = true
+//             }
+//         }
+//     }
     Connections {
-        target: restClient
-        function onAuthConnectionStateChanged(){
-            console.log("function authConnectionStateChanged")
-            if(restClient.authConnectionState === WebSocketClient.Authorized) {
+        target: connAuthStatus
+        function onAuthStatusChanged(status) {
+            console.log("function authConnectionStateChanged", )
+//            if(client.authConnectionState === WebSocketClient.Authorized) {
+//            if(client.authStatus === ConnStatus.LoggedIn) {
+            if(status === ConnStatus.LoggedIn) {
                 console.log("function authConnectionStateChanged Succ")
                 statusText.color = "green"
                 statusText.text = "Вход успешно выполнен!"
@@ -56,13 +89,15 @@ Dialog {
                 loginTimer.start()
                 loginButton.enabled = true
             }
-            if(restClient.authConnectionState === WebSocketClient.NotAuthorized) {
-                console.log("function authConnectionStateChanged Err")
-                statusText.color = "red"
-                statusText.text = "Authorization error, check your login and password."
-                loginButton.enabled = true
-            }
-            if(restClient.authConnectionState === WebSocketClient.NoConnection) {
+
+            // if(status !== ConnStatus.LoggedIn) {
+            //     console.log("function authConnectionStateChanged Err")
+            //     statusText.color = "red"
+            //     statusText.text = "Authorization error, check your login and password."
+            //     loginButton.enabled = true
+            // }
+
+            else if(status !== ConnStatus.Connected) {
                 console.log("function authConnectionStateChanged Err")
                 statusText.color = "red"
                 statusText.text = "No network connection. Check your network."
@@ -201,9 +236,9 @@ Dialog {
                 statusText.color = "blue"
                 enabled = false // Блокируем кнопку на время проверки
                 if (isLoginMode) {
-                    wsClient.loginRequested(emailField.text, passwordField.text)
+                    restClient.login(emailField.text, passwordField.text)
                 } else {
-                    wsClient.registerRequested(emailField.text, passwordField.text)
+                    restClient.registerUser(emailField.text, passwordField.text)
                 }
             }
         }
