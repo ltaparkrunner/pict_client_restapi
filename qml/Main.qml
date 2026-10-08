@@ -52,6 +52,16 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: connAuthStatus
+        function onAuthStatusChanged(status) {
+
+        }
+        function onConnectionStatusChanged(status) {
+
+        }
+    }
+
     RestClient {
         id: client
     }
@@ -660,7 +670,7 @@ ApplicationWindow {
                 // }
             }
             // Текстовое описание текущего
-/*
+
             Label {
                 //anchors.verticalCenter: parent.verticalCenter
                 Layout.alignment: Qt.AlignVCenter
@@ -669,27 +679,26 @@ ApplicationWindow {
                 font.bold: true
 
                 text: {
-                    if (!wsClient) return "Инициализация..."
-                    switch (wsClient.authConnectionState) {
-                        case WebSocketClient.Idle: return "Отключено"
-                        case WebSocketClient.Connecting: return "Подключение по сети..."
-                        case WebSocketClient.Connected: return "Сеть активна, авторизация..."
-                        case WebSocketClient.Authenticating: return "Проверка токена безопасности..."
-                        case WebSocketClient.Authorized: return "Подключен: " + (authHandler ? authHandler.username : "")
-                        case WebSocketClient.NotAuthorized: return "Ни один пользователь не подключен."     //"Ошибка: Токен устарел или испорчен"
-                        case WebSocketClient.NoConnection: return "Ошибка: Нет связи с сервером"
-                        case WebSocketClient.LoggingOut: return "Пользователь отключается"
-                        case WebSocketClient.LoggedOut: return "Ни один пользователь не подключен."
-                        case WebSocketClient.AuthorizedNoPingRespond: return "Подключен: " + (authHandler ? authHandler.username : "") + ".  Ping отсутствует."
-                        case WebSocketClient.LoggedOutNoPingRespond: return "Ни один пользователь не подключен.  Ping отсутствует."
-                        case WebSocketClient.ExternalDisconnecting: return "Ошибка сервера."
-                        case WebSocketClient.UserDisconnecting: return "Отключаемся."
-                        default: return "Неизвестный статус"
+                    //  if (!restClient) return "Инициализация..."
+                    if(!connAuthStatus) return "Инициализация..."
+                    switch (connAuthStatus.connectionStatus) {
+                        case ConnStatus.Unchecked: return "Unknown"
+                        case ConnStatus.Disconnected: return "Not connected"
+                        case ConnStatus.Connected: { //return "Connected"
+                            switch (client.authStatus){
+                                case ConnStatus.Authenticating: return "In authentication process"
+                                case ConnStatus.LoggedOut: return "Logged out"
+                                case ConnStatus.AuthFailed: return "Authentication failed"
+                                case ConnStatus.LoggedIn: return "Successful authentication " + (authHandler ? authHandler.username : "")
+                            }
+                        }
+                        break;
+                        default:  return "Unknown 2"
                     }
 
                 }
             }
-*/
+
         }
     }
     function processTFPath(){
