@@ -22,10 +22,10 @@ int main(int argc, char *argv[]) {
 
     UnifiedStorageModel usModel(&rest_clt);
     ImageModel imgModel(&rest_clt);
+    RestClient restClient("https://localhost:8080");
 
     QQmlApplicationEngine engine;
 
-    RestClient restClient("https://localhost:8080");
     engine.rootContext()->setContextProperty("restClient", &restClient);
     engine.rootContext()->setContextProperty("FileHelper", &fileHlp);
     engine.rootContext()->setContextProperty("storageModel", &usModel);

@@ -11,6 +11,7 @@
 #include <QtQml/qqmlregistration.h> // Recommended for Qt 6 QML registration macros
 #include "connstatus.h"
 #include <QTimer>
+#include <QSettings>
 
 class RestClient : public QObject
 {
@@ -34,7 +35,7 @@ public:
     QString baseUrl() const { return m_baseUrl; }
     void setBaseUrl(const QString &url);
 
-    QString token() const { return m_token; }
+    QString token() const { return m_authToken; }
     QString username() const {return m_username;}
 
 
@@ -57,8 +58,9 @@ public:
 
 
 signals:
-    void loginSuccess(const QString &token);
-
+    // void loginSuccess(const QString &token);
+    void authSucc(ConnStatus::AuthStatus st, QString s);
+    void authErr(ConnStatus::AuthStatus st, QString s);
     void uploadSuccess();
     // Tip: QJsonObject converts automatically to a JavaScript Object/Dictionary in QML
     void folderListReceived(const QJsonObject &listData);
@@ -72,19 +74,21 @@ signals:
 
     void errReceived();
 private slots:
-    void onLoginReply(QNetworkReply *reply);
+    // void onLoginReply(QNetworkReply *reply);
     void onUploadReply(QNetworkReply *reply);
     void onFolderListReply(QNetworkReply *reply);
-    void onRegisterReply(QNetworkReply *reply);
+    // void onRegisterReply(QNetworkReply *reply);
+    void onAuthReply(QNetworkReply *reply);
     void onPingReply(QNetworkReply *reply);
 
 private:
+    QSettings m_settings;
     QNetworkAccessManager *m_manager;
 public:
     ConnStatus m_status; // Объект статуса
 private:
     QString m_baseUrl;
-    QString m_token;
+    QString m_authToken;
     QString m_username;
 
     QTimer *m_pingTimer = nullptr;

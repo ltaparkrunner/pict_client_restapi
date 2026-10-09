@@ -5,8 +5,12 @@
 #include <QDebug>
 
 RestClient::RestClient(QObject *parent)
-    : QObject(parent), m_manager(new QNetworkAccessManager(this))
-    ,m_status(this)
+    : QObject(parent)
+    , m_settings("Alex@Co", "Alex@Co")
+    , m_authToken(m_settings.value("Auth/accessToken", "").toString())  // the second argument is a default value
+    , m_username(m_settings.value("Auth/username", "").toString())
+    , m_manager(new QNetworkAccessManager(this))
+    , m_status(this)
 //    ,m_status(this))
 {
     m_status.setConnectionStatus(ConnStatus::Connecting);
@@ -16,7 +20,10 @@ RestClient::RestClient(QObject *parent)
 }
 
 RestClient::RestClient(const QString &baseUrl, QObject *parent)
-    : QObject(parent), m_manager(new QNetworkAccessManager(this)), m_baseUrl(baseUrl)
+    : QObject(parent)
+    , m_settings("Alex@Co", "Alex@Co")
+    , m_manager(new QNetworkAccessManager(this))
+    , m_baseUrl(baseUrl)
 {
     m_status.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
@@ -55,8 +62,8 @@ QNetworkRequest RestClient::createRequest(const QString &endpoint)
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     // Если токен уже есть, добавляем его в заголовок Authorization
-    if (!m_token.isEmpty()) {
-        request.setRawHeader("Authorization", "Bearer " + m_token.toUtf8());
+    if (!m_authToken.isEmpty()) {
+        request.setRawHeader("Authorization", "Bearer " + m_authToken.toUtf8());
     }
 
     // --- НАЧАЛО ИЗМЕНЕНИЙ ДЛЯ SSL ---
@@ -80,23 +87,57 @@ void RestClient::login(const QString &username, const QString &password)
     QNetworkRequest request = createRequest("/auth/login");
     QNetworkReply *reply = m_manager->post(request, QJsonDocument(json).toJson());
     m_status.setAuthStatus(ConnStatus::Authenticating);
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() { onLoginReply(reply); });
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() { onAuthReply(reply); });
 }
 
-void RestClient::onLoginReply(QNetworkReply *reply)
+// void RestClient::onLoginReply(QNetworkReply *reply)
+// {
+//     reply->deleteLater();
+//     if (reply->error() == QNetworkReply::NoError) {
+//         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+//         m_authToken = doc.object().value("token").toString();
+//         m_username = doc.object().value("username").toString();
+
+//         m_settings.beginGroup("Auth");
+//         m_settings.setValue("accessToken", m_authToken);
+//         m_settings.setValue("username", m_username);
+//         m_settings.endGroup();
+//         emit loginSuccess(m_authToken);
+//         m_status.setConnectionStatus(ConnStatus::Connected);
+//         m_status.setAuthStatus(ConnStatus::LoggedIn);
+//     } else {
+//         emit errorOccurred("Логин не удался: " + reply->errorString());
+//     }
+// }
+
+void RestClient::onAuthReply(QNetworkReply *reply)
 {
-    reply->deleteLater();
     if (reply->error() == QNetworkReply::NoError) {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-        m_token = doc.object().value("token").toString();
+        m_authToken = doc.object().value("token").toString();
         m_username = doc.object().value("username").toString();
-        qDebug() << "username: " << m_username;
-        emit loginSuccess(m_token);
-        m_status.setConnectionStatus(ConnStatus::Connected);
-        m_status.setAuthStatus(ConnStatus::LoggedIn);
-    } else {
-        emit errorOccurred("Логин не удался: " + reply->errorString());
+        m_settings.beginGroup("Auth");
+        m_settings.setValue("accessToken", m_authToken);
+        m_settings.setValue("username", m_username);
+        m_settings.endGroup();
+
+        emit authSucc(ConnStatus::LoggedIn, "LoginSucc");
+    } else if(reply->error() == QNetworkReply::TimeoutError){
+
+        emit authErr(ConnStatus::AuthTimeoutErr, "LoginTimeoutErr");
+    } else if(reply->error() == QNetworkReply::ConnectionRefusedError){
+
+        emit authErr(ConnStatus::AuthRefused, "LoginConnErr");
     }
+    else {
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        if (doc.object().contains("error")) {
+            emit authErr(ConnStatus::AuthFailed, doc.object()["error"].toString());
+        }
+        else emit authErr(ConnStatus::AuthFailed, reply->errorString());
+    }
+    reply->deleteLater();
+
 }
 
 // --- 2. ЗАГРУЗКА ФАЙЛА (Замена Protobuf бинарников на Base64) ---
@@ -173,39 +214,39 @@ void RestClient::registerUser(const QString &username, const QString &password)
     QNetworkReply *reply = m_manager->post(request, QJsonDocument(json).toJson());
 
     // Лямбда-функция связывает завершение запроса с обработчиком ответа
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() { onRegisterReply(reply); });
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() { onAuthReply(reply); });
 }
 
-void RestClient::onRegisterReply(QNetworkReply *reply)
-{
-    // Обязательно освобождаем память после завершения обработки
-    reply->deleteLater();
+// void RestClient::onRegisterReply(QNetworkReply *reply)
+// {
+//     // Обязательно освобождаем память после завершения обработки
+//     reply->deleteLater();
 
-    if (reply->error() == QNetworkReply::NoError) {
-        // Читаем успешный ответ от сервера
-        QByteArray responseData = reply->readAll();
-        QJsonDocument doc = QJsonDocument::fromJson(responseData);
+//     if (reply->error() == QNetworkReply::NoError) {
+//         // Читаем успешный ответ от сервера
+//         QByteArray responseData = reply->readAll();
+//         QJsonDocument doc = QJsonDocument::fromJson(responseData);
 
-        qDebug() << "Регистрация успешна:" << responseData;
+//         qDebug() << "Регистрация успешна:" << responseData;
 
-        // Здесь можно вызывать сигнал успеха, чтобы QML переключил экран на логин
-        // emit registerSuccess();
-    }
-    else {
-        // Если сервер вернул ошибку (например, 400 Bad Request или 409 Conflict)
-        QByteArray responseData = reply->readAll();
-        QJsonDocument doc = QJsonDocument::fromJson(responseData);
+//         // Здесь можно вызывать сигнал успеха, чтобы QML переключил экран на логин
+//         // emit registerSuccess();
+//     }
+//     else {
+//         // Если сервер вернул ошибку (например, 400 Bad Request или 409 Conflict)
+//         QByteArray responseData = reply->readAll();
+//         QJsonDocument doc = QJsonDocument::fromJson(responseData);
 
-        // Пытаемся достать текст ошибки, отправленный вашим Node.js сервером
-        QString serverError = doc.object().value("error").toString();
+//         // Пытаемся достать текст ошибки, отправленный вашим Node.js сервером
+//         QString serverError = doc.object().value("error").toString();
 
-        if (!serverError.isEmpty()) {
-            emit errorOccurred(serverError);
-        } else {
-            emit errorOccurred(reply->errorString());
-        }
-    }
-}
+//         if (!serverError.isEmpty()) {
+//             emit errorOccurred(serverError);
+//         } else {
+//             emit errorOccurred(reply->errorString());
+//         }
+//     }
+// }
 
 // Метод отправляет легкий запрос для проверки связи
 void RestClient::checkConnection() {

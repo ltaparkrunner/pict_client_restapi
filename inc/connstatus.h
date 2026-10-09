@@ -16,7 +16,7 @@ public:
     enum ConnectionStatus { Unchecked, Connected, Connecting, Disconnected };
     Q_ENUM(ConnectionStatus)
 
-    enum AuthStatus { LoggedOut = 10, Authenticating, LoggedIn, AuthFailed };
+    enum AuthStatus { LoggedOut = 10, Authenticating, LoggedIn, AuthFailed, AuthTimeoutErr, AuthRefused };
     Q_ENUM(AuthStatus)
 
     explicit ConnStatus(QObject *parent = nullptr) : QObject(parent) {}

@@ -44,10 +44,10 @@ ApplicationWindow {
 
     Connections {
         target: restClient
-        function onLoginSuccess(token) {
-            console.log("Logged in successfully! Token: " + token)
+        function onAuthSucc(authSt, str) {
+            console.log("Logged in successfully! String: " + str)
         }
-        function onErrorOccurred(errorMsg) {
+        function onAuthErr(authSt, errorMsg) {
             console.error("Failed: " + errorMsg)
         }
     }
