@@ -658,16 +658,16 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignVCenter
                 color: "white"
 
-                // Делаем так, чтобы индикатор мигал во время подключения
-                // SequentialAnimation on opacity {
-                //     running: wsClient.authConnectionState === WebSocketClient.Connecting ||
-                //              wsClient.authConnectionState === WebSocketClient.Authenticating
-                //     loops: Animation.Infinite
-                //     PropertyAnimation { to: 0.2; duration: 500 }
-                //     PropertyAnimation { to: 1.0; duration: 500 }
-                //     // Если состояние стабильное, просто горит на 100%
-                //     onRunningChanged: if (!running) opacity = 1.0
-                // }
+                // We make the indicator flash during connection.
+                SequentialAnimation on opacity {
+                    running: connAuthStatus.connectionStatus === ConnStatus.Connecting ||
+                             connAuthStatus.authStatus === ConnStatus.Authenticating
+                    loops: Animation.Infinite
+                    PropertyAnimation { to: 0.2; duration: 500 }
+                    PropertyAnimation { to: 1.0; duration: 500 }
+                    // Если состояние стабильное, просто горит на 100%
+                    onRunningChanged: if (!running) opacity = 1.0
+                }
             }
             // Текстовое описание текущего
 
@@ -683,13 +683,14 @@ ApplicationWindow {
                     if(!connAuthStatus) return "Инициализация..."
                     switch (connAuthStatus.connectionStatus) {
                         case ConnStatus.Unchecked: return "Unknown"
+                        case ConnStatus.Connecting: return "In connecting process"
                         case ConnStatus.Disconnected: return "Not connected"
                         case ConnStatus.Connected: { //return "Connected"
-                            switch (client.authStatus){
+                            switch (connAuthStatus.authStatus){
                                 case ConnStatus.Authenticating: return "In authentication process"
                                 case ConnStatus.LoggedOut: return "Logged out"
                                 case ConnStatus.AuthFailed: return "Authentication failed"
-                                case ConnStatus.LoggedIn: return "Successful authentication " + (authHandler ? authHandler.username : "")
+                                case ConnStatus.LoggedIn: return "Successful authentication " + (restClient.username)
                             }
                         }
                         break;

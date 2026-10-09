@@ -23,6 +23,7 @@ class RestClient : public QObject
     Q_PROPERTY(ConnStatus::AuthStatus authStatus READ authStatus CONSTANT)
     Q_PROPERTY(QString baseUrl READ baseUrl WRITE setBaseUrl NOTIFY baseUrlChanged)
     Q_PROPERTY(QString token READ token NOTIFY tokenChanged)
+    Q_PROPERTY(QString username READ username NOTIFY usernameChanged)
 
 public:
     // Added a default constructor path for QML instantiation
@@ -34,6 +35,8 @@ public:
     void setBaseUrl(const QString &url);
 
     QString token() const { return m_token; }
+    QString username() const {return m_username;}
+
 
     // ConnStatus* status() const { return m_status; }
     ConnStatus::ConnectionStatus connStatus() const {return m_status.connectionStatus();}
@@ -64,6 +67,7 @@ signals:
     // Property change notifier signals
     void baseUrlChanged();
     void tokenChanged();
+    void usernameChanged();
     void connectionStatusChanged(bool connected);
 
     void errReceived();
@@ -81,6 +85,7 @@ public:
 private:
     QString m_baseUrl;
     QString m_token;
+    QString m_username;
 
     QTimer *m_pingTimer = nullptr;
     QNetworkRequest createRequest(const QString &endpoint);

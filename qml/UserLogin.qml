@@ -44,43 +44,9 @@ Dialog {
     //     }
     // }
 
-//     Connections {
-//         target: restClient
-// //        function onAuthConnectionStateChanged(){
-//         function onConnectionStatusChanged(){
-//             console.log("function authConnectionStateChanged")
-// //            if(client.authConnectionState === WebSocketClient.Authorized) {
-//             if(client.authStatus === ConnStatus.Authenticating) {
-//                 console.log("function authConnectionStateChanged Succ")
-//                 statusText.color = "green"
-//                 statusText.text = "Вход успешно выполнен!"
-//                 // Здесь можно закрыть диалог или переключить экран через Delay
-//                 loginTimer.start()
-//                 loginButton.enabled = true
-//             }
-// //            if(restClient.authConnectionState === WebSocketClient.NotAuthorized) {
-//             if(client.authStatus === ConnStatus.Authenticating) {
-//                 console.log("function authConnectionStateChanged Err")
-//                 statusText.color = "red"
-//                 statusText.text = "Authorization error, check your login and password."
-//                 loginButton.enabled = true
-//             }
-// //            if(restClient.authConnectionState === WebSocketClient.NoConnection) {
-//             if(client.authStatus !== ConnStatus.Connected) {
-//                 console.log("function authConnectionStateChanged Err")
-//                 statusText.color = "red"
-//                 statusText.text = "No network connection. Check your network."
-//                 loginTimer.start()
-//                 loginButton.enabled = true
-//             }
-//         }
-//     }
     Connections {
         target: connAuthStatus
         function onAuthStatusChanged(status) {
-            console.log("function authConnectionStateChanged", )
-//            if(client.authConnectionState === WebSocketClient.Authorized) {
-//            if(client.authStatus === ConnStatus.LoggedIn) {
             if(status === ConnStatus.LoggedIn) {
                 console.log("function authConnectionStateChanged Succ")
                 statusText.color = "green"
@@ -89,14 +55,6 @@ Dialog {
                 loginTimer.start()
                 loginButton.enabled = true
             }
-
-            // if(status !== ConnStatus.LoggedIn) {
-            //     console.log("function authConnectionStateChanged Err")
-            //     statusText.color = "red"
-            //     statusText.text = "Authorization error, check your login and password."
-            //     loginButton.enabled = true
-            // }
-
             else if(status !== ConnStatus.Connected) {
                 console.log("function authConnectionStateChanged Err")
                 statusText.color = "red"

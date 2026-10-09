@@ -9,19 +9,19 @@ RestClient::RestClient(QObject *parent)
     ,m_status(this)
 //    ,m_status(this))
 {
+    m_status.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
     m_pingTimer = new QTimer(this);
     connect(m_pingTimer, &QTimer::timeout, this, &RestClient::checkConnection);
-
 }
 
 RestClient::RestClient(const QString &baseUrl, QObject *parent)
     : QObject(parent), m_manager(new QNetworkAccessManager(this)), m_baseUrl(baseUrl)
 {
+    m_status.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
     m_pingTimer = new QTimer(this);
     connect(m_pingTimer, &QTimer::timeout, this, &RestClient::checkConnection);
-
 }
 
 // Вспомогательный метод (можно объявить в private секции хедера restclient.h)
@@ -79,7 +79,7 @@ void RestClient::login(const QString &username, const QString &password)
 
     QNetworkRequest request = createRequest("/auth/login");
     QNetworkReply *reply = m_manager->post(request, QJsonDocument(json).toJson());
-
+    m_status.setAuthStatus(ConnStatus::Authenticating);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() { onLoginReply(reply); });
 }
 
@@ -89,6 +89,8 @@ void RestClient::onLoginReply(QNetworkReply *reply)
     if (reply->error() == QNetworkReply::NoError) {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         m_token = doc.object().value("token").toString();
+        m_username = doc.object().value("username").toString();
+        qDebug() << "username: " << m_username;
         emit loginSuccess(m_token);
         m_status.setConnectionStatus(ConnStatus::Connected);
         m_status.setAuthStatus(ConnStatus::LoggedIn);
