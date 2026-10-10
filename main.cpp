@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("FileHelper", &fileHlp);
     engine.rootContext()->setContextProperty("storageModel", &usModel);
     engine.rootContext()->setContextProperty("imageModel", &imgModel);
-    engine.rootContext()->setContextProperty("connAuthStatus", &restClient.m_status);
+    engine.rootContext()->setContextProperty("connAuthStatus", &restClient.m_statusConnAuth);
 
     qmlRegisterUncreatableType<FileHelper>("com.myapp.helpers", 1, 0, "FileHelperType", "Error: FileHelperType is enum only");
 

@@ -10,10 +10,10 @@ RestClient::RestClient(QObject *parent)
     , m_authToken(m_settings.value("Auth/accessToken", "").toString())  // the second argument is a default value
     , m_username(m_settings.value("Auth/username", "").toString())
     , m_manager(new QNetworkAccessManager(this))
-    , m_status(this)
+    , m_statusConnAuth(this)
 //    ,m_status(this))
 {
-    m_status.setConnectionStatus(ConnStatus::Connecting);
+    m_statusConnAuth.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
     m_Timer.tmr = new QTimer(this);
     m_Timer.counter = 0;
@@ -26,7 +26,7 @@ RestClient::RestClient(const QString &baseUrl, QObject *parent)
     , m_manager(new QNetworkAccessManager(this))
     , m_baseUrl(baseUrl)
 {
-    m_status.setConnectionStatus(ConnStatus::Connecting);
+    m_statusConnAuth.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
     m_Timer.tmr = new QTimer(this);
     m_Timer.counter = m_Timer.max_cnt;
@@ -36,11 +36,12 @@ RestClient::RestClient(const QString &baseUrl, QObject *parent)
     request.setTransferTimeout(3000);
     QNetworkReply* reply = m_manager->head(request);
 
+    connect(&m_statusConnAuth, &ConnStatus::connectionStatusChanged, this, &RestClient::onConnStatusChanged);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         if (reply->error() == QNetworkReply::NoError){
             qDebug() << "Client instance" << this << "QNetworkReply::NoError";
-            m_status.setConnectionStatus(ConnStatus::Connected);
+            m_statusConnAuth.setConnectionStatus(ConnStatus::Connected);
         }
         else {
             QNetworkReply::NetworkError error = reply->error();
@@ -52,13 +53,56 @@ RestClient::RestClient(const QString &baseUrl, QObject *parent)
             } else {
                 qDebug() << "Reason:" << reply->errorString();
             }
-
-            m_status.setConnectionStatus(ConnStatus::Disconnected);
+            m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
         }
     });
 
     // m_Timer.tmr->start(1000);
     // checkConnection();
+}
+
+void RestClient::onConnStatusChanged(ConnStatus::ConnectionStatus statusConn){
+    qDebug() << "RestClient::onConnStatusChanged(ConnStatus::ConnectionStatus statusConn)";
+    if(statusConn == ConnStatus::Connected && m_statusConnAuth.authStatus() == ConnStatus::LoggedOut){
+        qDebug() << "statusConn " << statusConn << "  authStatus " << m_statusConnAuth.authStatus();
+        qDebug() << "m_authToken: " << m_authToken.toUtf8();
+        if (!m_authToken.isEmpty()) {
+            qDebug() << "!m_authToken.isEmpty()";
+            QNetworkRequest request = createRequest("/api/auth/me");
+            request.setTransferTimeout(3000);
+            request.setRawHeader("Authorization", "Bearer " + m_authToken.toUtf8());
+            QNetworkReply* reply = m_manager->get(request);
+
+            connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+                reply->deleteLater();
+
+                int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+                if (reply->error() == QNetworkReply::NoError && statusCode == 200) {
+                    // Токен валиден, парсим JSON ответа
+                    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+                    QJsonObject json = doc.object();
+
+                    m_username = json["username"].toString();
+                    qDebug() << "Token is VALID. Logged in as:" << m_username;
+
+                    // Здесь можно обновить статус сессии и сохранить имя пользователя
+                    m_statusConnAuth.setConnectionStatus(ConnStatus::Connected);
+                    // emit userAuthenticated(username);
+
+                } else {
+                    // Обработка ошибок валидации
+                    if (statusCode == 401 || statusCode == 403) {
+                        qDebug() << "Token is INVALID or EXPIRED. Redirect to Login.";
+                        // Токен испорчен, нужно сбросить его в настройках
+                    } else {
+                        qDebug() << "Network error during token verification:" << reply->errorString();
+                    }
+                    m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
+                }
+            });
+        }
+    }
 }
 
 // Вспомогательный метод (можно объявить в private секции хедера restclient.h)
@@ -116,7 +160,7 @@ void RestClient::login(const QString &username, const QString &password)
 
     QNetworkRequest request = createRequest("/auth/login");
     QNetworkReply *reply = m_manager->post(request, QJsonDocument(json).toJson());
-    m_status.setAuthStatus(ConnStatus::Authenticating);
+    m_statusConnAuth.setAuthStatus(ConnStatus::Authenticating);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() { onAuthReply(reply); });
 }
 
@@ -247,7 +291,7 @@ void RestClient::onPingReply(QNetworkReply *reply) {
 
     // Проверяем на наличие сетевых ошибок (таймаут, нет сети, DNS ошибка)
     if (reply->error() != QNetworkReply::NoError) {
-        emit connectionStatusChanged(false);
+        emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Disconnected);
         emit errorOccurred("Сервер недоступен: " + reply->errorString());
         return;
     }
@@ -256,9 +300,9 @@ void RestClient::onPingReply(QNetworkReply *reply) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 200) {
         qWarning("Server is available");
-        emit connectionStatusChanged(true);
+        emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Connected);
     } else {
-        emit connectionStatusChanged(false);
+        emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Disconnected);
     }
 }
 

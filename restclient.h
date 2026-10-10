@@ -45,9 +45,9 @@ public:
     QString username() const {return m_username;}
 
 
-    // ConnStatus* status() const { return m_status; }
-    ConnStatus::ConnectionStatus connStatus() const {return m_status.connectionStatus();}
-    ConnStatus::AuthStatus authStatus() const {return m_status.authStatus();}
+    // ConnStatus* status() const { return m_statusConn; }
+    ConnStatus::ConnectionStatus connStatus() const {return m_statusConnAuth.connectionStatus();}
+    ConnStatus::AuthStatus authStatus() const {return m_statusConnAuth.authStatus();}
 
     // Mark methods as Q_INVOKABLE so they can be called directly from QML Javascript elements
     Q_INVOKABLE void login(const QString &username, const QString &password);
@@ -76,7 +76,7 @@ signals:
     void baseUrlChanged();
     void tokenChanged();
     void usernameChanged();
-    void connectionStatusChanged(bool connected);
+    // void connectionStatusChanged(bool connected);
 
     void errReceived();
 private slots:
@@ -86,12 +86,13 @@ private slots:
     // void onRegisterReply(QNetworkReply *reply);
     void onAuthReply(QNetworkReply *reply);
     void onPingReply(QNetworkReply *reply);
+    void onConnStatusChanged(ConnStatus::ConnectionStatus status);
 
 private:
     QSettings m_settings;
     QNetworkAccessManager *m_manager;
 public:
-    ConnStatus m_status; // Объект статуса
+    ConnStatus m_statusConnAuth; // Объект статуса
 private:
     QString m_baseUrl;
     QString m_authToken;
