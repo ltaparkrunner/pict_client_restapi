@@ -17,12 +17,10 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Alex@Co");
     app.setWindowIcon(QIcon("../icons/clover_transparent.png"));
 
-    RestClient rest_clt("https://localhost:8082");
-    FileHelper fileHlp(&rest_clt);
-
-    UnifiedStorageModel usModel(&rest_clt);
-    ImageModel imgModel(&rest_clt);
     RestClient restClient("https://localhost:8080");
+    FileHelper fileHlp(&restClient);
+    UnifiedStorageModel usModel(&restClient);
+    ImageModel imgModel(&restClient);
 
     QQmlApplicationEngine engine;
 

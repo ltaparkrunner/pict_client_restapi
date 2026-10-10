@@ -15,8 +15,9 @@ RestClient::RestClient(QObject *parent)
 {
     m_status.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
-    m_pingTimer = new QTimer(this);
-    connect(m_pingTimer, &QTimer::timeout, this, &RestClient::checkConnection);
+    m_Timer.tmr = new QTimer(this);
+    m_Timer.counter = 0;
+    connect(m_Timer.tmr, &QTimer::timeout, this, &RestClient::checkConnection);
 }
 
 RestClient::RestClient(const QString &baseUrl, QObject *parent)
@@ -27,8 +28,37 @@ RestClient::RestClient(const QString &baseUrl, QObject *parent)
 {
     m_status.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
-    m_pingTimer = new QTimer(this);
-    connect(m_pingTimer, &QTimer::timeout, this, &RestClient::checkConnection);
+    m_Timer.tmr = new QTimer(this);
+    m_Timer.counter = m_Timer.max_cnt;
+    m_Timer.wcnt = true;
+//    QNetworkRequest request(m_baseUrl);
+    QNetworkRequest request = createRequest("/ping");
+    request.setTransferTimeout(3000);
+    QNetworkReply* reply = m_manager->head(request);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        if (reply->error() == QNetworkReply::NoError){
+            qDebug() << "Client instance" << this << "QNetworkReply::NoError";
+            m_status.setConnectionStatus(ConnStatus::Connected);
+        }
+        else {
+            QNetworkReply::NetworkError error = reply->error();
+            qDebug() << "Client instance" << this << "else QNetworkReply::NoError";
+            if (error == QNetworkReply::TimeoutError || error == QNetworkReply::OperationCanceledError) {
+                qDebug() << "Reason: Server did not respond within timeout limits.";
+            } else if (error == QNetworkReply::ConnectionRefusedError) {
+                qDebug() << "Reason: Server is offline or port is closed.";
+            } else {
+                qDebug() << "Reason:" << reply->errorString();
+            }
+
+            m_status.setConnectionStatus(ConnStatus::Disconnected);
+        }
+    });
+
+    // m_Timer.tmr->start(1000);
+    // checkConnection();
 }
 
 // Вспомогательный метод (можно объявить в private секции хедера restclient.h)
@@ -89,26 +119,6 @@ void RestClient::login(const QString &username, const QString &password)
     m_status.setAuthStatus(ConnStatus::Authenticating);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() { onAuthReply(reply); });
 }
-
-// void RestClient::onLoginReply(QNetworkReply *reply)
-// {
-//     reply->deleteLater();
-//     if (reply->error() == QNetworkReply::NoError) {
-//         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-//         m_authToken = doc.object().value("token").toString();
-//         m_username = doc.object().value("username").toString();
-
-//         m_settings.beginGroup("Auth");
-//         m_settings.setValue("accessToken", m_authToken);
-//         m_settings.setValue("username", m_username);
-//         m_settings.endGroup();
-//         emit loginSuccess(m_authToken);
-//         m_status.setConnectionStatus(ConnStatus::Connected);
-//         m_status.setAuthStatus(ConnStatus::LoggedIn);
-//     } else {
-//         emit errorOccurred("Логин не удался: " + reply->errorString());
-//     }
-// }
 
 void RestClient::onAuthReply(QNetworkReply *reply)
 {
@@ -217,37 +227,6 @@ void RestClient::registerUser(const QString &username, const QString &password)
     connect(reply, &QNetworkReply::finished, this, [this, reply]() { onAuthReply(reply); });
 }
 
-// void RestClient::onRegisterReply(QNetworkReply *reply)
-// {
-//     // Обязательно освобождаем память после завершения обработки
-//     reply->deleteLater();
-
-//     if (reply->error() == QNetworkReply::NoError) {
-//         // Читаем успешный ответ от сервера
-//         QByteArray responseData = reply->readAll();
-//         QJsonDocument doc = QJsonDocument::fromJson(responseData);
-
-//         qDebug() << "Регистрация успешна:" << responseData;
-
-//         // Здесь можно вызывать сигнал успеха, чтобы QML переключил экран на логин
-//         // emit registerSuccess();
-//     }
-//     else {
-//         // Если сервер вернул ошибку (например, 400 Bad Request или 409 Conflict)
-//         QByteArray responseData = reply->readAll();
-//         QJsonDocument doc = QJsonDocument::fromJson(responseData);
-
-//         // Пытаемся достать текст ошибки, отправленный вашим Node.js сервером
-//         QString serverError = doc.object().value("error").toString();
-
-//         if (!serverError.isEmpty()) {
-//             emit errorOccurred(serverError);
-//         } else {
-//             emit errorOccurred(reply->errorString());
-//         }
-//     }
-// }
-
 // Метод отправляет легкий запрос для проверки связи
 void RestClient::checkConnection() {
     // Обычно используется эндпоинт вроде /api/ping или /api/health.
@@ -285,9 +264,9 @@ void RestClient::onPingReply(QNetworkReply *reply) {
 
 // Метод для запуска периодического пинга
 void RestClient::startAutoPing(int intervalSeconds) {
-    if (!m_pingTimer->isActive()) {
+    if (!m_Timer.tmr->isActive()) {
         // Переводим секунды в миллисекунды и запускаем
-        m_pingTimer->start(intervalSeconds * 1000);
+        m_Timer.tmr->start(intervalSeconds * 1000);
 
         // Рекомендуется сделать первый вызов сразу,
         // чтобы не ждать окончания первого интервала таймера
@@ -297,7 +276,7 @@ void RestClient::startAutoPing(int intervalSeconds) {
 
 // Метод для остановки пинга (например, при переходе приложения в спящий режим)
 void RestClient::stopAutoPing() {
-    if (m_pingTimer->isActive()) {
-        m_pingTimer->stop();
+    if (m_Timer.tmr->isActive()) {
+        m_Timer.tmr->stop();
     }
 }

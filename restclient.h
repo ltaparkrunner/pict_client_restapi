@@ -12,6 +12,12 @@
 #include "connstatus.h"
 #include <QTimer>
 #include <QSettings>
+struct cntTimer{
+    QTimer *tmr = nullptr;
+    int counter;
+    bool wcnt;
+    const int max_cnt = 3;
+};
 
 class RestClient : public QObject
 {
@@ -91,7 +97,9 @@ private:
     QString m_authToken;
     QString m_username;
 
-    QTimer *m_pingTimer = nullptr;
+    // QTimer *m_pingTimer = nullptr;
+    // QTimer *m_reconnectTimer = nullptr;
+    cntTimer m_Timer;
     QNetworkRequest createRequest(const QString &endpoint);
     void setupSslConfiguration();
 };
