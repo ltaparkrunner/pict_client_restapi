@@ -6,7 +6,7 @@ import QtQuick.Layouts 1.15
 import QtQuick.Effects
 import QtQuick.Controls.Basic
 import Qt.labs.platform 1.1
-import com.myapp.helpers 1.0
+// import com.myapp.helpers 1.0
 import QtCore
 import pict_client_restapi
 
@@ -57,9 +57,9 @@ Window {
         }
     }
 
-    RestClient {
-        id: client
-    }
+    // RestClient {
+    //     id: client
+    // }
 
     // WarningDialog {
     //     id: warningDialog
@@ -454,8 +454,7 @@ Window {
             }
             Item {
                 anchors.fill: parent
-                // visible: ((wsClient.authConnectionState !== WebSocketClient.Authorized) && (nw_storage.activeFocus))
-                visible: ((client.authStatus !== ConnStatus.Authenticating) && (nw_storage.activeFocus))
+                visible: ((restClient.authStatus !== ConnStatus.Authenticating) && (nw_storage.activeFocus))
                 Text {
                     anchors.centerIn: parent
                     text: "No network connection."

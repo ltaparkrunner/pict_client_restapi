@@ -2,14 +2,14 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import Qt.labs.platform 1.1
-// import com.myapp.helpers 1.0
+
 import QtQuick.Controls.Basic
 import QtQuick.Dialogs
 import QtQuick.Effects
 import QtQuick.Shapes
 import QtCore
 //import pict_client //1.0
-import com.myapp.helpers 1.0
+// import com.myapp.helpers // 1.0
 import pict_client_restapi
 
 ApplicationWindow {
@@ -62,9 +62,9 @@ ApplicationWindow {
         }
     }
 
-    RestClient {
-        id: client
-    }
+    // RestClient {
+    //     id: client
+    // }
 
     UserLogin {
         id: userLogin
@@ -279,8 +279,7 @@ ApplicationWindow {
                             visible: false
 
                             function getCurrentUserImage() {
-                                //  if(wsClient.authConnectionState !== WebSocketClient.Authorized)
-                                if(client.authStatus !== ConnStatus.Authenticating)
+                                if(restClient.authStatus !== ConnStatus.Authenticating)
                                     return "../icons/user.svg";
                                 else {//return "../icons/cherry-blossom.png"
                                     var index = Math.floor(Math.random() * fileNames.length);
@@ -309,12 +308,12 @@ ApplicationWindow {
 //                        if(!authHandler.loggedIn) {
                         // if(wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
                         //     wsClient.authConnectionState === WebSocketClient.LoggedOut){
-                        if(client.authStatus !== ConnStatus.Authenticating) {
+                        if(restClient.authStatus !== ConnStatus.Authenticating) {
                             userLogin.statusTextElement.text = ""
                             userLogin.open()
                         }
 //                        else if(wsClient.authConnectionState === WebSocketClient.Authorized){
-                        else if(client.authStatus === ConnStatus.Authenticating){
+                        else if(restClient.authStatus === ConnStatus.Authenticating){
                             userLogoff.open()
                         }
                         else {

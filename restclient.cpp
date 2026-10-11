@@ -4,28 +4,17 @@
 #include <QFileInfo>
 #include <QDebug>
 
-RestClient::RestClient(QObject *parent)
+RestClient::RestClient(const QString &baseUrl, QObject *parent)
     : QObject(parent)
     , m_settings("Alex@Co", "Alex@Co")
     , m_authToken(m_settings.value("Auth/accessToken", "").toString())  // the second argument is a default value
     , m_username(m_settings.value("Auth/username", "").toString())
     , m_manager(new QNetworkAccessManager(this))
-    , m_statusConnAuth(this)
-//    ,m_status(this))
-{
-    m_statusConnAuth.setConnectionStatus(ConnStatus::Connecting);
-    setupSslConfiguration();
-    m_Timer.tmr = new QTimer(this);
-    m_Timer.counter = 0;
-    connect(m_Timer.tmr, &QTimer::timeout, this, &RestClient::checkConnection);
-}
-
-RestClient::RestClient(const QString &baseUrl, QObject *parent)
-    : QObject(parent)
-    , m_settings("Alex@Co", "Alex@Co")
-    , m_manager(new QNetworkAccessManager(this))
     , m_baseUrl(baseUrl)
 {
+    static int instanceCount = 0;
+    instanceCount++;
+    qDebug() << "Constructor, m_authToken: " << m_authToken;
     m_statusConnAuth.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
     m_Timer.tmr = new QTimer(this);
@@ -170,6 +159,7 @@ void RestClient::onAuthReply(QNetworkReply *reply)
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         m_authToken = doc.object().value("token").toString();
         m_username = doc.object().value("username").toString();
+        qDebug() << "Authentication m_authToken: " << m_authToken << "  m_username: " << m_username;
         m_settings.beginGroup("Auth");
         m_settings.setValue("accessToken", m_authToken);
         m_settings.setValue("username", m_username);

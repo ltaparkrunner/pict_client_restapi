@@ -34,7 +34,6 @@ class RestClient : public QObject
 
 public:
     // Added a default constructor path for QML instantiation
-    explicit RestClient(QObject *parent = nullptr);
     explicit RestClient(const QString &baseUrl, QObject *parent = nullptr);
 
     // Getters and setters required for Q_PROPERTY
