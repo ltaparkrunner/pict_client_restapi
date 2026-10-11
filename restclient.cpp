@@ -76,18 +76,21 @@ void RestClient::onConnStatusChanged(ConnStatus::ConnectionStatus statusConn){
                     qDebug() << "Token is VALID. Logged in as:" << m_username;
 
                     // Здесь можно обновить статус сессии и сохранить имя пользователя
-                    m_statusConnAuth.setConnectionStatus(ConnStatus::Connected);
+                    m_statusConnAuth.setAuthStatus(ConnStatus::LoggedIn);
                     // emit userAuthenticated(username);
 
                 } else {
                     // Обработка ошибок валидации
                     if (statusCode == 401 || statusCode == 403) {
                         qDebug() << "Token is INVALID or EXPIRED. Redirect to Login.";
+                        m_statusConnAuth.setAuthStatus(ConnStatus::TokenInvalidOrExpiredLoggedOut);
                         // Токен испорчен, нужно сбросить его в настройках
                     } else {
                         qDebug() << "Network error during token verification:" << reply->errorString();
+                        m_statusConnAuth.setAuthStatus(ConnStatus::LoggedOut);
+                        m_statusConnAuth.setConnectionStatus(ConnStatus::NetworkErrors);
                     }
-                    m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
+                    //  m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
                 }
             });
         }
@@ -153,6 +156,27 @@ void RestClient::login(const QString &username, const QString &password)
     connect(reply, &QNetworkReply::finished, this, [this, reply]() { onAuthReply(reply); });
 }
 
+void RestClient::logout(){
+    m_statusConnAuth.setAuthStatus(ConnStatus::LoggingOut);
+
+    if (m_settings.contains("Auth/accessToken")) {
+        m_settings.remove("Auth/accessToken");
+        m_settings.sync(); // Принудительно сохраняем изменения на диск
+
+    }
+    if (m_settings.contains("Auth/username")) {
+        m_settings.remove("Auth/username");
+        m_settings.sync(); // Принудительно сохраняем изменения на диск
+    }
+
+    this->m_authToken = "";
+    this->m_username = "";
+
+    m_statusConnAuth.setAuthStatus(ConnStatus::LoggedOut);
+    emit logoffSucc();
+}
+
+
 void RestClient::onAuthReply(QNetworkReply *reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
@@ -164,13 +188,13 @@ void RestClient::onAuthReply(QNetworkReply *reply)
         m_settings.setValue("accessToken", m_authToken);
         m_settings.setValue("username", m_username);
         m_settings.endGroup();
-
+        m_statusConnAuth.setAuthStatus(ConnStatus::LoggedIn);
         emit authSucc(ConnStatus::LoggedIn, "LoginSucc");
     } else if(reply->error() == QNetworkReply::TimeoutError){
-
+        m_statusConnAuth.setAuthStatus(ConnStatus::AuthTimeoutErr);
         emit authErr(ConnStatus::AuthTimeoutErr, "LoginTimeoutErr");
     } else if(reply->error() == QNetworkReply::ConnectionRefusedError){
-
+        m_statusConnAuth.setAuthStatus(ConnStatus::AuthRefused);
         emit authErr(ConnStatus::AuthRefused, "LoginConnErr");
     }
     else {

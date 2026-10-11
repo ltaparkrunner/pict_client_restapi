@@ -24,50 +24,65 @@ Dialog {
     // onRegisterRequested: (email, password) => authHandler.registerUser(email, password)
 
     // Отслеживаем сигналы от C++ объекта loginManager
-    // Connections {
-    //     target: authHandler
+    Connections {
+        target: restClient
 
-    //     function onSuccAuth(succMsg) {
-    //         console.log("function onSuccAuth", succMsg)
-    //         statusText.color = "green"
-    //         statusText.text = "Вход успешно выполнен!"
-    //         // Здесь можно закрыть диалог или переключить экран через Delay
-    //         loginTimer.start()
-    //         loginButton.enabled = true
-    //     }
+        //function onSuccAuth(succMsg)
+        function onAuthSucc(authSt, str){
+            console.log("function onSuccAuth", str)
+            statusText.color = "green"
+            statusText.text = "Вход успешно выполнен!"
+            // Здесь можно закрыть диалог или переключить экран через Delay
+            loginTimer.start()
+            loginButton.enabled = true
+        }
 
-    //     function onErrAuth(errMsg) {
-    //         console.log("function onErrAuth", errMsg)
-    //         statusText.color = "red"
-    //         statusText.text = errMsg
-    //         loginButton.enabled = true
-    //     }
-    // }
+        //function onErrAuth(errMsg)
+        function onAuthErr(authSt, errorMsg){
+            console.log("function onErrAuth", errorMsg)
+            statusText.color = "red"
+            statusText.text = errorMsg
+            loginButton.enabled = true
+        }
+    }
 
     Connections {
         target: connAuthStatus
         function onAuthStatusChanged(status) {
-            if(status === ConnStatus.LoggedIn) {
-                console.log("function authConnectionStateChanged Succ")
+            switch(status) {
+            case ConnStatus.LoggedIn: {
                 statusText.color = "green"
                 statusText.text = "Вход успешно выполнен!"
                 // Здесь можно закрыть диалог или переключить экран через Delay
                 loginTimer.start()
                 loginButton.enabled = true
+                return;
             }
-            else if(status !== ConnStatus.Connected) {
-                console.log("function authConnectionStateChanged Err")
-                statusText.color = "red"
+            case ConnStatus.Connected: {
+                statusText.color = "yellow"
                 statusText.text = "No network connection. Check your network."
                 loginTimer.start()
                 loginButton.enabled = true
+                return;
+            }
+            case ConnStatus.Connecting: {
+                statusText.color = "orange"
+                statusText.text = "In connection process"
+                return
+            }
+            default: {
+                statusText.color = "white"
+                statusText.text = "Default mode"
+                return
+            }
             }
         }
     }
 
+
     Timer {
         id: loginTimer
-        interval: 1000
+        interval: 2000
         onTriggered: authDialog.accept() // Закрывает диалог ТОЛЬКО при успехе
     }
 

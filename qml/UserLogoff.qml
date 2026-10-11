@@ -50,11 +50,7 @@ Dialog {
 
     // Обработка нажатия на кнопку "Выйти" (Dialog.Yes)
     onAccepted: {
-        //  console.log("Пользователь подтвердил выход")
-        // Вызываем ваш C++ метод логаута, который очистит токен
-        //  authHandler.logout()
-        //  console.log(JSON.stringify(wsClient, null, 2))
-        wsClient.logout()
+        restClient.logout()
     }
 
     // Обработка нажатия на кнопку "Отмена" (Dialog.No или закрытие окна)

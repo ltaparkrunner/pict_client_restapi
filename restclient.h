@@ -50,6 +50,7 @@ public:
 
     // Mark methods as Q_INVOKABLE so they can be called directly from QML Javascript elements
     Q_INVOKABLE void login(const QString &username, const QString &password);
+    Q_INVOKABLE void logout();
     Q_INVOKABLE void registerUser(const QString &username, const QString &password);
 
     Q_INVOKABLE void uploadFile(const QString &filePath, const QString &targetFolder, const QString &info);
@@ -66,6 +67,7 @@ signals:
     // void loginSuccess(const QString &token);
     void authSucc(ConnStatus::AuthStatus st, QString s);
     void authErr(ConnStatus::AuthStatus st, QString s);
+    void logoffSucc();
     void uploadSuccess();
     // Tip: QJsonObject converts automatically to a JavaScript Object/Dictionary in QML
     void folderListReceived(const QJsonObject &listData);

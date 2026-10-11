@@ -13,10 +13,10 @@ class ConnStatus : public QObject {
     Q_PROPERTY(AuthStatus authStatus READ authStatus WRITE setAuthStatus NOTIFY authStatusChanged)
 
 public:
-    enum ConnectionStatus { Unchecked, Connected, Connecting, Disconnected };
+    enum ConnectionStatus { Unchecked, Connected, Connecting, Disconnected, NetworkErrors };
     Q_ENUM(ConnectionStatus)
 
-    enum AuthStatus { LoggedOut = 10, Authenticating, LoggedIn, AuthFailed, AuthTimeoutErr, AuthRefused };
+    enum AuthStatus { LoggedOut = 10, Authenticating, LoggedIn, AuthFailed, AuthTimeoutErr, AuthRefused, TokenInvalidOrExpiredLoggedOut, LoggingOut };
     Q_ENUM(AuthStatus)
 
     explicit ConnStatus(QObject *parent = nullptr) : QObject(parent) {}

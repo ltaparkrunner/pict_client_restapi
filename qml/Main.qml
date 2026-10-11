@@ -44,12 +44,6 @@ ApplicationWindow {
 
     Connections {
         target: restClient
-        function onAuthSucc(authSt, str) {
-            console.log("Logged in successfully! String: " + str)
-        }
-        function onAuthErr(authSt, errorMsg) {
-            console.error("Failed: " + errorMsg)
-        }
     }
 
     Connections {
@@ -61,10 +55,6 @@ ApplicationWindow {
 
         }
     }
-
-    // RestClient {
-    //     id: client
-    // }
 
     UserLogin {
         id: userLogin
@@ -305,27 +295,25 @@ ApplicationWindow {
                     }
 
                     onClicked: {
-//                        if(!authHandler.loggedIn) {
-                        // if(wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
-                        //     wsClient.authConnectionState === WebSocketClient.LoggedOut){
-                        if(restClient.authStatus !== ConnStatus.Authenticating) {
+                        if(restClient.authStatus !== ConnStatus.Authenticating && restClient.authStatus !== ConnStatus.LoggedIn
+                                && restClient.authStatus !== ConnStatus.LoggingOut && restClient.connStatus === ConnStatus.Connected) {
                             userLogin.statusTextElement.text = ""
                             userLogin.open()
                         }
-//                        else if(wsClient.authConnectionState === WebSocketClient.Authorized){
-                        else if(restClient.authStatus === ConnStatus.Authenticating){
+//                        else if(wsClient.authConnectionState === ConnStatus.Authorized){
+                        else if(restClient.authStatus === ConnStatus.LoggedIn){
                             userLogoff.open()
                         }
-                        else {
-                            nwDialog.open()
-                        }
+                        // else {
+                        //     nwDialog.open()
+                        // }
                     }
                     // Shape {
                     //     id: bubble
                     //     x: -text.width - 25
                     //     anchors.margins: 3
                     //     preferredRendererType: Shape.CurveRenderer
-                    //     visible: wsClient.authConnectionState === WebSocketClient.NotAuthorized ||
+                    //     visible: wsClient.authConnectionState === ConnStatus.NotAuthorized ||
                     //              wsClient.authConnectionState === WebSocketClient.LoggedOut
                     //     ShapePath {
                     //         strokeWidth: 0
@@ -635,7 +623,37 @@ ApplicationWindow {
         // Меняем цвет фона панели в зависимости от состояния сети/авторизации
         background: Rectangle {
             color: {
-                return "#667085" // Цвет по умолчанию (Серый)
+                if (!connAuthStatus) return "#667085" // Цвет по умолчанию (Серый)
+
+                switch (connAuthStatus.connectionStatus) {
+                    case ConnStatus.Connecting: return "#f57c00" // Оранжевый (В процессе)
+                    // case ConnStatus.AuthorizedNoPingRespond:
+                    // case ConnStatus.LoggedOutNoPingRespond:
+                    // case ConnStatus.ExternalDisconnecting:
+                    // case ConnStatus.UserDisconnecting:
+
+                    case ConnStatus.Unchecked: return "#667085"
+                    case ConnStatus.Disconnected:
+                    case ConnStatus.NetworkErrors:
+                        return "#d32f2f" // Красный (Ошибка)
+                    case ConnStatus.Connected: { //return "Connected"
+                        switch (connAuthStatus.authStatus){
+                            case ConnStatus.TokenInvalidOrExpiredLoggedOut:
+                            case ConnStatus.AuthFailed:
+                            case ConnStatus.AuthRefused:
+                            case ConnStatus.LoggedOut: return "#6495ed"
+
+                            case ConnStatus.AuthTimeoutErr: return "#ffb6c1"
+
+                            case ConnStatus.Authenticating:
+                            case ConnStatus.LoggingOut: return "#f57c00" // Оранжевый (В процессе)
+                            case ConnStatus.LoggedIn: return "#2e7d32"   // Зеленый (Успешно подключен)
+                        }
+                    }
+                    return "#f57c00";
+                    default:
+                        return "#667085"
+                }
             }
 
             // Плавный переход цвета при смене состояний
@@ -684,12 +702,17 @@ ApplicationWindow {
                         case ConnStatus.Unchecked: return "Unknown"
                         case ConnStatus.Connecting: return "In connecting process"
                         case ConnStatus.Disconnected: return "Not connected"
+                        case ConnStatus.NetworkErrors: return "Network error when connecting"
                         case ConnStatus.Connected: { //return "Connected"
                             switch (connAuthStatus.authStatus){
                                 case ConnStatus.Authenticating: return "In authentication process"
                                 case ConnStatus.LoggedOut: return "Logged out"
                                 case ConnStatus.AuthFailed: return "Authentication failed"
                                 case ConnStatus.LoggedIn: return "Successful authentication " + (restClient.username)
+                                case ConnStatus.AuthTimeoutErr: return "Authentication timeout error"
+                                case ConnStatus.AuthRefused: return "Refused in authentication"
+                                case ConnStatus.TokenInvalidOrExpiredLoggedOut: return "The token is invalid or expired"
+                                case ConnStatus.LoggingOut: return "In Logging out process"
                             }
                         }
                         break;
