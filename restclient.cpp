@@ -14,7 +14,7 @@ RestClient::RestClient(const QString &baseUrl, QObject *parent)
 {
     static int instanceCount = 0;
     instanceCount++;
-    qDebug() << "Constructor, m_authToken: " << m_authToken;
+    //  qDebug() << "Constructor, m_authToken: " << m_authToken;
     m_statusConnAuth.setConnectionStatus(ConnStatus::Connecting);
     setupSslConfiguration();
     m_Timer.tmr = new QTimer(this);
@@ -45,9 +45,9 @@ RestClient::RestClient(const QString &baseUrl, QObject *parent)
             m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
         }
     });
-
-    // m_Timer.tmr->start(1000);
-    // checkConnection();
+    connect(m_Timer.tmr, &QTimer::timeout, this, &RestClient::checkConnection);
+    m_Timer.tmr->start(3000);
+    checkConnection();
 }
 
 void RestClient::onConnStatusChanged(ConnStatus::ConnectionStatus statusConn){
@@ -289,6 +289,7 @@ void RestClient::registerUser(const QString &username, const QString &password)
 void RestClient::checkConnection() {
     // Обычно используется эндпоинт вроде /api/ping или /api/health.
     // Если такого нет, можно слать HEAD-запрос на baseUrl.
+    // qDebug() << "RestClient::checkConnection()";
     QNetworkRequest request = createRequest("/ping");
 
     // Используем HEAD вместо GET, чтобы не качать тело ответа, только заголовки
@@ -305,18 +306,26 @@ void RestClient::onPingReply(QNetworkReply *reply) {
 
     // Проверяем на наличие сетевых ошибок (таймаут, нет сети, DNS ошибка)
     if (reply->error() != QNetworkReply::NoError) {
-        emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Disconnected);
+        qDebug() << "reply->error() != QNetworkReply::NoError";
+        //  emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Disconnected);
+        m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
+        m_statusConnAuth.setAuthStatus(ConnStatus::LoggedOut);
         emit errorOccurred("Сервер недоступен: " + reply->errorString());
         return;
     }
 
     // Проверяем HTTP-статус (200 OK считается успешным)
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    qDebug() << "onPingReply  statusCode: " << statusCode;
     if (statusCode == 200) {
         qWarning("Server is available");
-        emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Connected);
+        //  emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Connected);
+        m_statusConnAuth.setConnectionStatus(ConnStatus::Connected);
+        // TODO: call attempt of token connection.
     } else {
-        emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Disconnected);
+        //  emit m_statusConnAuth.connectionStatusChanged(ConnStatus::Disconnected);
+        m_statusConnAuth.setConnectionStatus(ConnStatus::Disconnected);
+        m_statusConnAuth.setAuthStatus(ConnStatus::LoggedOut);
     }
 }
 
